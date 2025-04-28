@@ -2,30 +2,6 @@
 
 import { useState } from "react";
 import { Mail, Phone, MapPin, Clock } from "lucide-react";
-import { Resend } from "resend";
-
-const resend = new Resend(`${process.env.REACT_APP_RESEND_API_KEY}`);
-
-const resendFunction = async (content) => {
-  const { data, error } = await resend.emails.send({
-    from: content.email,
-    to: ['mnmconsultations@gmail.com'],
-    subject: content.subject,
-    html: `
-      <p>Name: ${content.name}</p>
-      <p>Email: ${content.email}</p>
-      <p>Phone: ${content.phone}</p>
-      <p>Message:</p>
-      <p>${content.message}</p>
-    `,
-  });
-
-  if (error) {
-    return console.error({ error });
-  }
-
-  console.log({ data });
-}
 
 const Contact = () => {
   const [name, setName] = useState("");
@@ -99,7 +75,17 @@ const Contact = () => {
           //   subject: 'Hello World',
           //   html: '<p>Congrats on sending your <strong>first email</strong>!</p>'
           // });
-          await resendFunction(formData)
+          const response = await fetch('/api/send-email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData),
+          });
+  
+          const data = await response.json();
+
+          console.log(data);
         if (true) {
           setSubmissionResult({
             success: true,
