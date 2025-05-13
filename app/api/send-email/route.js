@@ -27,7 +27,7 @@ export async function POST(request) {
       from: 'Your Verified Sender <onboarding@resend.dev>', // CHANGE THIS to your verified Resend sender
       to: ['mnmconsultations@gmail.com'], // Your receiving email address
       subject: `Contact Form Submission: ${content.subject}`,
-      react: EmailTemplate({firstName: content.name}), // Pass the name to the EmailTemplate component
+      react: EmailTemplate(content), // Pass the name to the EmailTemplate component
     });
 
     if (error) {
