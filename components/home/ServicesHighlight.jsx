@@ -1,77 +1,68 @@
 import Link from "next/link";
 import {
-  HomeIcon,
-  BuildingIcon,
-  FileText,
-  Plane,
-  CreditCard,
-  Phone,
+  Book, Building, FileText, Plane, CreditCard, Phone
 } from "lucide-react";
 
 const services = [
   {
     id: 1,
-    title: "Accommodation Support",
-    description:
-      "Find the perfect place to stay with our curated housing options.",
-    icon: <BuildingIcon className="h-10 w-10 text-primary" />,
-    link: "/services#accommodation",
+    title: 'Pre-Departure Support',
+    description: 'Comprehensive preparation with video series, Q&A sessions, and starter kits.',
+    icon: <Book className="h-10 w-10 text-primary" />,
+    link: '/services#pre-departure'
   },
   {
     id: 2,
-    title: "Anmeldung Assistance",
-    description: "Navigate the German registration process with ease.",
-    icon: <FileText className="h-10 w-10 text-primary" />,
-    link: "/services#anmeldung",
+    title: 'Arrival & Settlement',
+    description: 'Airport pickups, orientation bootcamps, and 10-day support program.',
+    icon: <Plane className="h-10 w-10 text-primary" />,
+    link: '/services#arrival'
   },
   {
     id: 3,
-    title: "Airport Pickup",
-    description:
-      "Start your journey with a warm welcome and hassle-free transfer.",
-    icon: <Plane className="h-10 w-10 text-primary" />,
-    link: "/services#airport",
+    title: 'Documentation Assistance',
+    description: 'Help with Anmeldung, blocked accounts, and university enrollment.',
+    icon: <FileText className="h-10 w-10 text-primary" />,
+    link: '/services#documents'
   },
   {
     id: 4,
-    title: "Bank Account Setup",
-    description: "Get financial guidance and assistance with account creation.",
-    icon: <CreditCard className="h-10 w-10 text-primary" />,
-    link: "/services#banking",
+    title: 'Cultural Integration',
+    description: 'Monthly events like Diwali, Holi, and community connections.',
+    icon: <Building className="h-10 w-10 text-primary" />,
+    link: '/services#cultural'
   },
   {
     id: 5,
-    title: "SIM Card & Connectivity",
-    description: "Stay connected with the right mobile and internet solutions.",
+    title: 'Connectivity Solutions',
+    description: 'Exclusive O2 partnership with 50% off mobile plans and high data packages.',
     icon: <Phone className="h-10 w-10 text-primary" />,
-    link: "/services#sim",
+    link: '/services#connectivity'
   },
   {
     id: 6,
-    title: "Local Orientation",
-    description:
-      "Learn to navigate your new surroundings with our local guides.",
-    icon: <HomeIcon className="h-10 w-10 text-primary" />,
-    link: "/services#orientation",
-  },
+    title: 'Financial Guidance',
+    description: 'Support with banking, budgeting, and cost-saving strategies.',
+    icon: <CreditCard className="h-10 w-10 text-primary" />,
+    link: '/services#financial'
+  }
 ];
 
 const ServicesHighlight = () => {
   return (
-    <section className=" bg-white">
-      <div className=" px-4 py-12 md:px-52 md:py-24">
+    <section className=" bg-white py-16 px-4 md:py-24 md:px-8 lg:px-16">
+      <div className=" max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
             Our Services
           </h2>
           <p className="text-gray-600 max-w-3xl mx-auto">
-            We provide comprehensive solutions to make your relocation to
-            Germany smooth and stress-free. Our expert team offers personalized
-            assistance for all your needs.
+          We provide comprehensive solutions to make your relocation from India to Germany smooth and stress-free.
+          Our culturally relevant support services are designed specifically for Indian students.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-8 md:p-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map((service) => (
             <Link
               href={service.link}

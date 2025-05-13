@@ -1,165 +1,146 @@
 import {
-  FileText,
-  Building,
-  Plane,
-  CreditCard,
-  Phone,
-  MapPin,
-  Book,
-  Calendar,
-  Award,
-  Clock,
+  Book, Building, Plane, CreditCard, Phone, MapPin, FileText, Calendar, Users, Award
 } from "lucide-react";
 import Link from "next/link";
 
 const services = [
   {
-    id: "accommodation",
-    title: "Accommodation Support",
-    description:
-      "Finding the right place to live is crucial for your experience in Germany. We provide personalized accommodation search based on your preferences, budget, and location needs. Our team conducts virtual tours, helps with rental applications, and reviews contracts to ensure you find a suitable and safe living arrangement.",
-    icon: <Building className="h-12 w-12 text-primary" />,
+    id: 'pre-departure',
+    title: 'Pre-Departure Support',
+    description: 'Comprehensive preparation for your journey to Germany, ensuring you start your academic adventure with confidence and clarity. Our pre-departure services focus on addressing common concerns and providing practical guidance before you leave India.',
+    icon: <Book className="h-12 w-12 text-primary" />,
     features: [
-      "Personalized accommodation search",
-      "Virtual property tours",
-      "Rental application assistance",
-      "Contract review and explanation",
-      "Move-in support and documentation",
+      'Online Q&A Sessions (1-hour group Zoom)',
+      'WhatsApp Support Group (6 months)',
+      'Berlin Relocation Blueprint (10-part video series with Hindi subtitles)',
+      'Pre-Departure Starter Kit (Berlin map, O2 SIM card, phrasebook)',
+      '1-1 Pre-Departure Discussion (optional)'
     ],
     src: "/accomodation-help.png",
   },
   {
-    id: "anmeldung",
-    title: "Anmeldung Assistance",
-    description:
-      "The address registration (Anmeldung) is a mandatory procedure in Germany. Our service helps you navigate this process smoothly by preparing all necessary documentation, scheduling appointments, and providing translation support during your visit to the registration office.",
-    icon: <FileText className="h-12 w-12 text-primary" />,
+    id: 'arrival',
+    title: 'Arrival & Settlement',
+    description: 'Make your transition to German life smooth with our arrival and settlement services. From the moment you land at Berlin Brandenburg Airport, our team ensures you navigate your new environment with ease and confidence.',
+    icon: <Plane className="h-12 w-12 text-primary" />,
     features: [
-      "Document preparation and verification",
-      "Appointment booking service",
-      "Translation assistance",
-      "In-person support (optional)",
-      "Follow-up document management",
+      'Airport Pickup Service with public transport training',
+      '10-Day Post-Arrival Support with daily check-ins',
+      'Orientation Bootcamp (Anmeldung, transport, groceries)',
+      'Indian Welcome Package (spices, rice, recipe booklet)',
+      'Assistance with local SIM activation and banking'
     ],
     src: "/Anmeldung-Assistance.jpg"
   },
   {
-    id: "airport",
-    title: "Airport Pickup",
-    description:
-      "Start your new life in Germany stress-free with our reliable airport pickup service. Our friendly team will greet you at the airport, help with your luggage, and provide a comfortable transfer to your accommodation. During the journey, we'll share useful local information and answer any immediate questions you might have.",
-    icon: <Plane className="h-12 w-12 text-primary" />,
+    id: 'documents',
+    title: 'Documentation Assistance',
+    description: 'Navigate German bureaucracy with expert guidance. We support you through essential registration processes and paperwork, ensuring you meet all legal requirements for your stay in Germany as a student.',
+    icon: <FileText className="h-12 w-12 text-primary" />,
     features: [
-      "Meet and greet at arrival gate",
-      "Luggage assistance",
-      "Comfortable private transfer",
-      "Local orientation during journey",
-      "24/7 service availability",
+      'Anmeldung (city registration) assistance',
+      'Guidance on blocked account options (Expatrio, Fintiba)',
+      'Bank account setup support',
+      'Health insurance guidance',
+      'University enrollment documentation advice'
     ],
     src: "/airport-pickup.png",
   },
   {
-    id: "banking",
-    title: "Bank Account Setup",
-    description:
-      "Opening a bank account is an essential step for your financial stability in Germany. We guide you through the options available, assist with application forms, schedule appointments, and provide translation support during bank visits to ensure you select the right banking service for your needs.",
-    icon: <CreditCard className="h-12 w-12 text-primary" />,
+    id: 'cultural',
+    title: 'Cultural Integration',
+    description: 'Experience the best of both worlds with our cultural integration services. We help you maintain connections to Indian culture while embracing German society, creating a balanced and enriching international experience.',
+    icon: <Calendar className="h-12 w-12 text-primary" />,
     features: [
-      "Bank comparison and recommendation",
-      "Application preparation",
-      "Appointment scheduling",
-      "Translation assistance",
-      "Online banking setup support",
+      'Monthly cultural events (Diwali, Holi, Bollywood nights)',
+      'Indian Student Association Berlin connections',
+      'Guided city explorations (Brandenburg Gate, Mauerpark)',
+      'Cultural adaptation workshops',
+      'German language resources and practice opportunities'
     ],
     src: "/bank_account-setup.jpg",
   },
   {
-    id: "sim",
-    title: "SIM Card & Connectivity",
-    description:
-      "Stay connected from day one with our SIM card and internet setup assistance. We help you choose the most suitable mobile plan based on your usage requirements, assist with activation, and guide you through the process of setting up home internet if needed.",
-    icon: <Phone className="h-12 w-12 text-primary" />,
+    id: 'buddy',
+    title: 'Buddy Program',
+    description: 'Gain personalized guidance from experienced Indian students already established in Berlin. Our Buddy Program provides mentorship and friendly support to help you navigate both academic and day-to-day challenges.',
+    icon: <Users className="h-12 w-12 text-primary" />,
     features: [
-      "Mobile plan comparison",
-      "SIM card procurement and activation",
-      "Phone setup assistance",
-      "Home internet options guidance",
-      "Troubleshooting support",
+      '1-2 months of mentorship from Berlin-based Indian students',
+      'Local insights and practical advice',
+      'Help finding Indian grocery stores and restaurants',
+      'Social integration and friendship building',
+      'Academic and career guidance from experienced peers'
     ],
     src: "/sim-card-connectivity.jpg",
   },
   {
-    id: "orientation",
-    title: "Local Orientation",
-    description:
-      "Get familiar with your new surroundings through our personalized orientation tours. We show you essential locations in your neighborhood, help you understand the public transportation system, and introduce you to local amenities, making you feel at home in your new environment.",
-    icon: <MapPin className="h-12 w-12 text-primary" />,
+    id: 'accommodation',
+    title: 'Accommodation Support',
+    description: 'Finding suitable and affordable housing is one of the biggest challenges for international students in Germany. We provide guidance on navigating the Berlin housing market and understanding German rental practices.',
+    icon: <Building className="h-12 w-12 text-primary" />,
     features: [
-      "Guided neighborhood tour",
-      "Public transportation tutorial",
-      "Essential amenities introduction",
-      "Cultural tips and local insights",
-      "Customized recommendations",
+      'Housing market orientation during Bootcamp',
+      'Guidance on WG-Gesucht and other platforms',
+      'Explanation of German rental terms (Kaltmiete, Warmmiete)',
+      'Temporary accommodation recommendations',
+      'Document preparation for rental applications'
     ],
     src: "/local-orientation.png",
   },
   {
-    id: "resources",
-    title: "Welcome Resources",
-    description:
-      "Our comprehensive welcome resources provide you with essential information about living in Germany. From cultural norms to practical tips, these curated materials help you navigate everyday situations and understand German customs better.",
-    icon: <Book className="h-12 w-12 text-primary" />,
+    id: 'transportation',
+    title: 'Transport Navigation',
+    description: 'Learn to navigate Berlin\'s extensive public transportation system confidently with our hands-on guidance. We teach you cost-effective travel methods that save money while helping you explore the city independently.',
+    icon: <MapPin className="h-12 w-12 text-primary" />,
     features: [
-      "Digital welcome guide",
-      "Cultural integration tips",
-      "Local recommendation list",
-      "Emergency contact information",
-      "Seasonal event calendar",
+      'Public transport training (FEX, S-Bahn, U-Bahn, buses)',
+      'BVG app setup and usage guidance',
+      'Information on student discounts and semester tickets',
+      'Bicycle safety and rental options',
+      'Cost-saving tips (€5-€10 tickets vs. €50-€70 taxis)'
     ],
     src: "/welcome-resource.jpeg",
   },
   {
-    id: "events",
-    title: "Events & Networking",
-    description:
-      "Connect with fellow newcomers and locals through our regular events and networking opportunities. These gatherings help you build your social circle, practice language skills, and integrate into the community more effectively.",
-    icon: <Calendar className="h-12 w-12 text-primary" />,
+    id: 'connectivity',
+    title: 'Connectivity Solutions',
+    description: 'Stay connected from day one with our exclusive mobile plans and internet setup assistance. Through our partnership with O2, we offer special rates and high-data packages designed specifically for Indian students.',
+    icon: <Phone className="h-12 w-12 text-primary" />,
     features: [
-      "Regular social gatherings",
-      "Cultural exchange events",
-      "Professional networking opportunities",
-      "Language practice meetups",
-      "Community integration activities",
+      'Exclusive O2 partnership with 50% discount',
+      'High-data mobile plans (100-300 GB)',
+      'Pre-activated SIM cards in Starter Kit',
+      'Home internet options guidance',
+      'WhatsApp Support Group for technical questions'
     ],
     src: "/Event-connecting.png",
   },
   {
-    id: "specialized",
-    title: "Specialized Services",
-    description:
-      "For specific needs beyond our standard offerings, we provide specialized services tailored to your unique situation. Whether it's educational guidance, professional certification assistance, or family-related support, our team can develop customized solutions.",
+    id: 'safety',
+    title: 'Safety & Emergency Support',
+    description: 'Your wellbeing is our priority. Our safety workshops and emergency support ensure you\'re prepared for any situation and know how to access help when needed in your new environment.',
     icon: <Award className="h-12 w-12 text-primary" />,
     features: [
-      "Educational institution guidance",
-      "Professional certification assistance",
-      "Healthcare system navigation",
-      "Family support services",
-      "Legal consultation referrals",
+      'Safety & Emergency Workshop (1-day)',
+      'Guidance on emergency numbers (110, 112)',
+      'Scam awareness and prevention tips',
+      'Safety kit with whistle and contact card',
+      'Information on student rights and protections'
     ],
     src: "/Specialised-service (1).jpeg",
   },
   {
-    id: "ongoing",
-    title: "Ongoing Support",
-    description:
-      "Our commitment doesn't end after initial services. With our ongoing support packages, you can access continued assistance as you settle into your new life. This flexible support system ensures you always have someone to turn to when challenges arise.",
-    icon: <Clock className="h-12 w-12 text-primary" />,
+    id: 'financial',
+    title: 'Financial Guidance',
+    description: 'Managing finances in a new country can be challenging. We provide practical advice on banking, budgeting, and cost-saving strategies to help you make the most of your resources while studying in Germany.',
+    icon: <CreditCard className="h-12 w-12 text-primary" />,
     features: [
-      "Virtual consultation sessions",
-      "Priority response system",
-      "Problem resolution assistance",
-      "Regular check-ins",
-      "Extended support periods available",
+      'Blocked account guidance (€11,904/year requirement)',
+      'German bank account setup assistance',
+      'Budget planning for Berlin living costs',
+      'Information on student jobs and income options',
+      'Tips for managing monthly expenses (rent, food, transport)'
     ],
     src: "/ongoing.jpeg",
   },
@@ -168,25 +149,24 @@ const services = [
 const Services = () => {
   return (
     <div>
-      <section className="bg-gradient-to-r from-blue-50 to-blue-100 py-16 px-6 md:py-24">
-        <div className="">
+      <section className="bg-gradient-to-r from-blue-50 to-blue-100 py-16 md:py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
               Our Services
             </h1>
             <p className="text-lg text-gray-700 mb-8">
-              Comprehensive relocation and settling-in services designed to make
-              your transition to Germany smooth and stress-free. From
-              accommodation support to local orientation, we've got you covered
-              every step of the way.
+              Comprehensive support services designed specifically for Indian students 
+              pursuing higher education in Germany. From pre-departure preparation to 
+              cultural integration, we've got you covered every step of the way.
             </p>
           </div>
         </div>
       </section>
 
       <section className="py-16">
-        <div className="">
-          <div className="grid grid-cols-1 gap-16 p-8 md:py-24 md:px-52 px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 gap-16">
             {services.map((service, index) => (
               <div
                 key={service.id}
@@ -238,7 +218,7 @@ const Services = () => {
             ))}
           </div>
 
-          <div className="text-center p-8 md:py-24 md:px-52 px-4">
+          <div className="text-center mt-16">
             <h3 className="text-2xl font-bold text-gray-900 mb-4">
               Ready to Get Started?
             </h3>
@@ -247,10 +227,10 @@ const Services = () => {
               based on your specific needs.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="btn-primary">
+              <button className="btn btn-primary text-neutral-content">
                 <Link href="/packages">View Packages</Link>
               </button>
-              <button className="btn-outline">
+              <button className="btn btn-primary text-neutral-content">
                 <Link href="/contact">Contact Us</Link>
               </button>
             </div>

@@ -33,8 +33,8 @@ const testimonials = [
 
 const Testimonials = () => {
   return (
-    <section className=" bg-white">
-      <div className=" md:px-54 md:py-24 py-12 px-4">
+    <section className=" bg-white py-16 px-4 md:py-24 md:px-8 lg:px-16">
+      <div className=" max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
             What Our Clients Say

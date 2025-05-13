@@ -3,24 +3,27 @@ import Link from "next/link";
 const Hero = () => {
   // Remove the TypeScript type annotation
   return (
-    <section className="relative bg-gradient-to-r from-white to-blue-200 p-9 md:p-52 overflow-hidden">
+    <div className="bg-gradient-to-r from-blue-50 to-blue-100">
+    <div className="max-w-7xl mx-auto px-4">
+    <section className="relative py-20 md:py-32 overflow-hidden max-w-7xl mx-auto px-4">
       {/* Map background */}
 
       <div className="relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div className="animate-fade-in">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              Your Smooth Transition to{" "}
-              <span className="text-primary">Germany</span>
+            From <span className="text-[#FF9933]">India</span> to <span className="text-primary">Germany</span> With Confidence
             </h1>
             <p className="text-lg text-gray-900 mb-8">
-              Comprehensive relocation and settling-in services for individuals
-              moving to Germany. We simplify your international move with
-              personalized support every step of the way.
+            Comprehensive support services for Indian students pursuing higher education in Germany. 
+            We simplify your international journey with culturally relevant guidance every step of the way.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/packages" className="btn btn-primary">
                 View Packages
+              </Link>
+              <Link href="/contact" className="btn btn-primary">
+                Contact Us
               </Link>
             </div>
           </div>
@@ -35,6 +38,7 @@ const Hero = () => {
         </div>
       </div>
     </section>
+    </div></div>
   );
 };
 

@@ -6,50 +6,38 @@ import { Check } from "lucide-react";
 
 const packages = [
   {
-    id: 1,
-    name: "Basic",
-    description: "Essential support for your move to Germany",
-    price: "€299",
+    id: 'essential',
+    name: 'Essential Package',
+    description: 'Core services for a smooth transition to Germany',
+    price: '₹25,000',
     features: [
-      "Anmeldung Assistance",
-      "SIM Card Setup",
-      "Initial Consultation",
-      "Digital Welcome Guide",
+      'Online Q&A Session (1-hour group Zoom)',
+      'WhatsApp Support Group (6 months pre-arrival)',
+      'Berlin Relocation Blueprint (10-part video series)',
+      'Pre-Departure Starter Kit',
+      'Event Coordination & Group Integration',
+      'Orientation Bootcamp (2-day program)'
     ],
-    link: "/packages#basic",
-    recommended: false,
+    link: "/packages#essential",
+    recommended: true
   },
   {
-    id: 2,
-    name: "Standard",
-    description: "Comprehensive support for a smooth transition",
-    price: "€599",
+    id: 'premium',
+    name: 'Premium Package',
+    description: 'Comprehensive support for a worry-free experience',
+    price: '₹40,000',
     features: [
-      "Everything in Basic",
-      "Accommodation Assistance",
-      "Bank Account Setup",
-      "Local Transportation Guidance",
-      "Ongoing Support (2 weeks)",
-    ],
-    link: "/packages#standard",
-    recommended: true,
-  },
-  {
-    id: 3,
-    name: "Premium",
-    description: "Complete end-to-end relocation support",
-    price: "€999",
-    features: [
-      "Everything in Standard",
-      "Airport Pickup",
-      "Orientation Tour",
-      "Utility Connections Setup",
-      "Ongoing Support (4 weeks)",
-      "Priority Assistance",
+      'Everything in Essential Package',
+      'Airport Pickup Service',
+      'Indian Welcome Package',
+      '10-Day Post-Arrival Support',
+      'Buddy Program (1-2 months mentorship)',
+      'Safety & Emergency Workshop',
+      '1-1 Pre-Departure Discussion'
     ],
     link: "/packages#premium",
-    recommended: false,
-  },
+    recommended: false
+  }
 ];
 
 // Find the index of the recommended package for default selection
@@ -155,8 +143,8 @@ const PackagesOverview = () => {
   }, [packages.length]);
 
   return (
-    <section className=" bg-gray-50">
-      <div className=" px-4 py-12 md:px-54 md:py-24">
+    <section className=" bg-gray-50 py-16 px-4 md:py-24 md:px-8 lg:px-16">
+      <div className=" max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
             Service Packages
@@ -264,7 +252,7 @@ const PackagesOverview = () => {
         </div>
 
         {/* --- Desktop Grid (Hidden on Small screens) --- */}
-        <div className="hidden md:grid md:grid-cols-3 gap-8">
+        <div className="hidden md:grid md:grid-cols-2 gap-8">
           {packages.map((pkg) => (
             // Use existing card structure - Ensure h-full and flex for consistent height
             <div
@@ -328,7 +316,7 @@ const PackagesOverview = () => {
             Need something more specific? Create your custom package.
           </p>
           {/* Ensure Link is styled as a button */}
-          <Link href="/contact" className="btn btn-neutral">
+          <Link href="/contact" className="btn btn-primary text-neutral-content">
             Connect...
           </Link>
         </div>

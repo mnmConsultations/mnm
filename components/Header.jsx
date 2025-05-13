@@ -13,7 +13,7 @@ const Header = () => {
 
   return (
     <header className="bg-neutral shadow-sm sticky top-0 z-50">
-      <div className=" flex justify-between items-center p-4 md:px-58">
+      <div className=" max-w-7xl mx-auto px-4 flex justify-between items-center py-4">
         <Link href="/" className="flex items-center space-x-2">
           <img
             src="/MnMFullLogo-removebg-preview.png"
@@ -32,6 +32,12 @@ const Header = () => {
           </Link>
           <Link href="/packages" className="nav-link text-white">
             Packages
+          </Link>
+          <Link href="/about" className="nav-link text-white">
+            About Us
+          </Link>
+          <Link href="/faq" className="nav-link text-white">
+            FAQ
           </Link>
           {/* <Link href="/resources" className="nav-link text-white">Resources</Link> */}
           {/* <Link href="/blog" className="nav-link text-white">Blog</Link> */}
@@ -79,6 +85,19 @@ const Header = () => {
             >
               Packages
             </Link>
+            <Link
+              href="/about"
+              className="nav-link px-4 py-2 hover:bg-[#1a2a47] text-white rounded"
+            >
+              About Us
+            </Link>
+            <Link
+              href="/faq"
+              className="nav-link px-4 py-2 hover:bg-[#1a2a47] text-white rounded"
+            >
+              FAQ
+            </Link>
+            
             {/* <Link
               href="/resources"
               className="nav-link px-4 py-2 hover:bg-[#1a2a47] text-white rounded"

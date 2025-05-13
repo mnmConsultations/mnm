@@ -6,87 +6,54 @@ import Link from "next/link";
 
 const packages = [
   {
-    id: "basic",
-    name: "Basic",
-    description: "Essential support for your move to Germany",
-    price: "€299",
+    id: 'essential',
+    name: 'Essential Package',
+    description: 'Core services for a smooth transition to Germany',
+    price: '₹25,000',
     features: [
-      "Anmeldung Assistance",
-      "SIM Card Setup",
-      "Initial Consultation (1 hour)",
-      "Digital Welcome Guide",
-      "Email Support (1 week)",
+      'Online Q&A Session (1-hour group Zoom)',
+      'WhatsApp Support Group (6 months pre-arrival)',
+      'Berlin Relocation Blueprint (10-part video series)',
+      'Pre-Departure Starter Kit',
+      'Event Coordination & Group Integration',
+      'Orientation Bootcamp (2-day program)'
     ],
     excludedFeatures: [
-      "Accommodation Assistance",
-      "Airport Pickup",
-      "Bank Account Setup",
-      "Local Orientation Tour",
-      "Ongoing Support",
+      'Airport Pickup',
+      'Indian Welcome Package',
+      'Buddy Program',
+      'Safety & Emergency Workshop'
     ],
-    popular: false,
+    popular: true
   },
   {
-    id: "standard",
-    name: "Standard",
-    description: "Comprehensive support for a smooth transition",
-    price: "€599",
+    id: 'premium',
+    name: 'Premium Package',
+    description: 'Comprehensive support for a worry-free experience',
+    price: '₹40,000',
     features: [
-      "Everything in Basic",
-      "Accommodation Assistance",
-      "Bank Account Setup",
-      "Local Transportation Guidance",
-      "Extended Consultation (2 hours)",
-      "Email & Phone Support (2 weeks)",
-    ],
-    excludedFeatures: [
-      "Airport Pickup",
-      "In-person Anmeldung Assistance",
-      "Orientation Tour",
-      "Priority Support",
-    ],
-    popular: true,
-  },
-  {
-    id: "premium",
-    name: "Premium",
-    description: "Complete end-to-end relocation support",
-    price: "€999",
-    features: [
-      "Everything in Standard",
-      "Airport Pickup",
-      "In-person Anmeldung Assistance",
-      "Guided Orientation Tour",
-      "Utility Connections Setup",
-      "Extended Consultation (4 hours)",
-      "Priority Email & Phone Support (4 weeks)",
+      'Everything in Essential Package',
+      'Airport Pickup Service',
+      'Indian Welcome Package',
+      '10-Day Post-Arrival Support',
+      'Buddy Program (1-2 months mentorship)',
+      'Safety & Emergency Workshop',
+      '1-1 Pre-Departure Discussion'
     ],
     excludedFeatures: [],
-    popular: false,
-  },
+    popular: false
+  }
 ];
 
 const additionalServices = [
-  { id: "airport", name: "Airport Pickup", price: "€80" },
-  { id: "orientation", name: "City Orientation Tour", price: "€120" },
-  { id: "insurance", name: "Insurance Setup Assistance", price: "€110" },
-  { id: "translation", name: "Document Translation (per page)", price: "€25" },
-  {
-    id: "housing-extended",
-    name: "Extended Accommodation Search",
-    price: "€150",
-  },
-  {
-    id: "accompaniment",
-    name: "Appointment Accompaniment (per hour)",
-    price: "€60",
-  },
-  {
-    id: "support-extension",
-    name: "Support Extension (per week)",
-    price: "€100",
-  },
-  { id: "furniture", name: "Furniture Shopping Assistance", price: "€90" },
+  { id: 'airport', name: 'Airport Pickup Service', price: '₹4,000' },
+  { id: 'welcome', name: 'Indian Welcome Package', price: '₹6,000' },
+  { id: 'post-arrival', name: '10-Day Post-Arrival Support', price: '₹5,000' },
+  { id: 'buddy', name: 'Buddy Program', price: '₹7,500' },
+  { id: 'safety', name: 'Safety & Emergency Workshop', price: '₹2,000' },
+  { id: 'discussion', name: '1-1 Pre-Departure Discussion', price: '₹2,000' },
+  { id: 'event', name: 'Cultural Event Participation', price: '₹2,500' },
+  { id: 'starter', name: 'Pre-Departure Starter Kit', price: '₹2,500' }
 ];
 
 const popularIndex = packages.findIndex((pkg) => pkg.popular) ?? 0;
@@ -181,16 +148,15 @@ const Packages = () => {
   }, [packages.length]);
   return (
     <div>
-      <section className="bg-gradient-to-r from-blue-50 to-blue-100 py-16 md:py-24 md:px-52 px-4">
-        <div className="">
+      <section className="bg-gradient-to-r from-blue-50 to-blue-100 py-16 md:py-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
               Our Service Packages
             </h1>
             <p className="text-lg text-gray-700 mb-8">
-              Choose from our carefully designed packages to suit your
-              relocation needs. Each package can be customized with additional
-              services as required.
+              Affordable support packages designed specifically for Indian students
+              moving to Germany for higher education.
             </p>
           </div>
         </div>
@@ -198,8 +164,8 @@ const Packages = () => {
 
       
 
-      <section className="py-16 packages-section">
-        <div className="">
+      <section className="py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* --- Mobile View: Toggles + Carousel (Hidden on Medium screens and up) --- */}
           <div className="md:hidden"> {/* Added margin bottom */}
             {/* DaisyUI Tabs for Toggles */}
@@ -309,12 +275,12 @@ const Packages = () => {
           </div>
 
           {/* --- Desktop Grid (Hidden on Small screens) --- */}
-          <div className="hidden md:grid md:grid-cols-3 gap-8 p-8 md:py-12 md:px-52 px-4">
+          <div className="hidden md:grid md:grid-cols-2 gap-8">
             {packages.map((pkg) => (
               <div
                 key={pkg.id}
                 id={pkg.id}
-                className={`bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:-translate-y-2 relative flex flex-col h-full ${
+                className={`bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:-translate-y-2 ${
                   pkg.popular ? "ring-2 ring-primary" : ""
                 }`}
               >
@@ -323,7 +289,7 @@ const Packages = () => {
                     Most Popular
                   </div>
                 )}
-                <div className="p-6 w-full flex flex-col flex-grow">
+                <div className="p-6">
                   <div>
                     <h3 className="text-2xl font-bold text-gray-800 mb-2">
                       {pkg.name}
@@ -335,7 +301,7 @@ const Packages = () => {
                       {pkg.price}
                     </p>
                   </div>
-                  <div className="flex-grow">
+                  <div className="">
                     <div className="mb-6">
                       <h4 className="font-semibold text-gray-800 mb-3">
                         Included:
@@ -383,7 +349,7 @@ const Packages = () => {
             ))}
           </div>
 
-          <div className="mt-16 bg-gray-50 rounded-lg p-8 md:py-24 md:px-52 px-4">
+          <div className="mt-16 bg-gray-50 rounded-lg p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
               Additional Services
             </h2>
@@ -392,7 +358,7 @@ const Packages = () => {
               your specific needs:
             </p>
 
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {additionalServices.map((service) => (
                 <div
                   key={service.id}
@@ -414,12 +380,11 @@ const Packages = () => {
               Need a Customized Solution?
             </h2>
             <p className="text-gray-700 mb-8 max-w-3xl mx-auto">
-              If our packages don't perfectly match your needs, we offer fully
-              customized solutions. Contact us for a personalized consultation
-              to create a tailored relocation package.
+              Contact Mayur Bafna at +91 9545099997 for an introductory call to discuss your
+              specific requirements and create a tailored package for your journey to Germany.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="btn-outline">
+              <button className="btn btn-primary text-neutral-content">
                 <Link href="/contact">Contact for Consultation</Link>
               </button>
             </div>
@@ -427,55 +392,52 @@ const Packages = () => {
         </div>
       </section>
 
-      <section className="py-16 bg-blue-50 md:py-24 md:px-52 px-4">
-        <div className="">
+      <section className="py-16 bg-blue-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
             <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">
               Frequently Asked Questions
             </h2>
-            <div className="space-y-6">
+            <div className="space-y-4">
             <div className="collapse collapse-plus bg-base-100 border border-base-300">
               <input type="radio" name="my-accordion-3" defaultChecked />
+              <div className="collapse-title font-semibold">
+              How does M&M Consultations ensure affordability?
+              </div>
+              <div className="collapse-content text-sm">
+              We provide a 50% fee reduction on pre-arrival services, promote cost-effective solutions like 
+                  public transport (₹5-₹10 tickets vs. ₹50-₹70 taxis), and offer exclusive partnerships like 
+                  our O2 mobile plan with 50% off and 100-300 GB data.
+              </div>
+            </div>
+            <div className="collapse collapse-plus bg-base-100 border border-base-300">
+              <input type="radio" name="my-accordion-3" />
               <div className="collapse-title font-semibold">
               Can I upgrade my package later?
               </div>
               <div className="collapse-content text-sm">
-              Yes, you can upgrade to a higher-tier package or add
-                  individual services at any time during your relocation
-                  process. Please contact us to discuss your upgrade options.
+              Yes, you can start with the Essential Package and add individual services like the Airport Pickup 
+                  (₹4,000) or Indian Welcome Package (₹6,000) at any time during your relocation process.
               </div>
             </div>
             <div className="collapse collapse-plus bg-base-100 border border-base-300">
               <input type="radio" name="my-accordion-3" />
               <div className="collapse-title font-semibold">
-              How long is the support period?
+              What is included in the Pre-Departure Starter Kit?
               </div>
               <div className="collapse-content text-sm">
-              Support periods vary by package: 1 week for Basic, 2 weeks for
-                  Standard, and 4 weeks for Premium. You can extend your support
-                  period with our additional services.
+              The Starter Kit (₹2,500 or included in packages) comes with a Berlin map, German phrasebook, 
+                  pre-activated O2 SIM card, universal travel adapter, and a personalized checklist, mailed 1-2 months before departure.
               </div>
             </div>
             <div className="collapse collapse-plus bg-base-100 border border-base-300">
               <input type="radio" name="my-accordion-3" />
               <div className="collapse-title font-semibold">
-              Do you offer refunds if I don't use all services?
+              How do I start with M&M Consultations?
               </div>
               <div className="collapse-content text-sm">
-              Our packages are designed as comprehensive solutions. While we
-                  don't offer partial refunds for unused services, we strive to
-                  ensure you get the maximum value from your selected package.
-              </div>
-            </div>
-            <div className="collapse collapse-plus bg-base-100 border border-base-300">
-              <input type="radio" name="my-accordion-3" />
-              <div className="collapse-title font-semibold">
-              Is there a payment plan available?
-              </div>
-              <div className="collapse-content text-sm">
-              Yes, we offer flexible payment plans for our Standard and
-                  Premium packages. Please contact our team to discuss the
-                  options available to you.
+              Contact Mayur Bafna at +91 9545099997 for an introductory call within 7 days to select packages. 
+              An MoU will be signed within 14 days, with onboarding by May 2025 for a June 2025 launch.
               </div>
             </div>
             </div>

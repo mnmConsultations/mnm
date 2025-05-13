@@ -119,7 +119,7 @@ const Contact = () => {
   return (
     <div>
       <section className="bg-gradient-to-r from-blue-50 to-blue-100 py-16 md:py-24">
-        <div className="">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
               Contact Us
@@ -132,8 +132,8 @@ const Contact = () => {
         </div>
       </section>
 
-      <section className="py-16 md:px-56">
-        <div className="">
+      <section className="py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1">
               <div className="bg-white rounded-lg shadow-md p-6 h-full">
@@ -167,18 +167,18 @@ const Contact = () => {
                       </h3>
                       <p className="text-gray-600">
                         <a
-                          href="mailto:info@mm-consultants.com"
+                          href="mailto:mnmconsultations+info@gmail.com"
                           className="hover:text-primary"
                         >
-                          info@mm-consultants.com
+                          mnmconsultations+info@gmail.com
                         </a>
                       </p>
                       <p className="text-gray-600">
                         <a
-                          href="mailto:support@mm-consultants.com"
+                          href="mailto:mnmconsultations+support@gmail.com"
                           className="hover:text-primary"
                         >
-                          support@mm-consultants.com
+                          mnmconsultations+support@gmail.com
                         </a>
                       </p>
                     </div>
@@ -194,10 +194,10 @@ const Contact = () => {
                       </h3>
                       <p className="text-gray-600">
                         <a
-                          href="tel:+4930123456789"
+                          href="tel:+91 9545099997"
                           className="hover:text-primary"
                         >
-                          +49 30 123 456 789
+                         +91 9545099997
                         </a>
                       </p>
                       <p className="text-gray-600 text-sm">
@@ -347,7 +347,7 @@ const Contact = () => {
                   <div className="form-control mt-6">
                     <button
                       type="submit"
-                      className={`btn btn-primary w-full ${isSubmitting ? "loading" : ""}`}
+                      className={`btn btn-primary text-neutral-content w-full ${isSubmitting ? "loading" : ""}`}
                       disabled={isSubmitting}
                     >
                       {isSubmitting ? "Submitting..." : "Send Message"}
@@ -400,7 +400,7 @@ const Contact = () => {
       </section>
 
       <section className="py-16 bg-gray-50">
-        <div className="">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">
               Frequently Asked Questions
@@ -412,20 +412,18 @@ const Contact = () => {
                 How quickly can you respond to inquiries?
               </div>
               <div className="collapse-content text-sm">
-                We typically respond to all inquiries within 24 hours during
-                business days. For urgent matters, please call our office
-                directly.
+              We typically respond to all inquiries within 24 hours during business days. Our WhatsApp Support Group 
+              guarantees responses within 12 hours, 24/7.
               </div>
             </div>
             <div className="collapse collapse-plus bg-base-100 border border-base-300">
               <input type="radio" name="my-accordion-3" />
               <div className="collapse-title font-semibold">
-                Do you offer in-person consultations?
+              How do I start the process with M&M Consultations?
               </div>
               <div className="collapse-content text-sm">
-                Yes, we offer both virtual and in-person consultations at our
-                Berlin office. You can schedule an appointment through our
-                contact form or by calling us directly.
+              Contact Mayur Bafna at +91 9545099997 for an introductory call within 7 days to select packages. 
+              An MoU will be signed within 14 days, with onboarding by May 2025 for a June 2025 launch.
               </div>
             </div>
             <div className="collapse collapse-plus bg-base-100 border border-base-300">
@@ -434,10 +432,8 @@ const Contact = () => {
                 Can I request services for cities other than Berlin?
               </div>
               <div className="collapse-content text-sm">
-                While we specialize in Berlin relocations, we also offer
-                services in other major German cities. Please specify your
-                destination city in your inquiry, and we'll let you know how we
-                can assist.
+              While we specialize in Berlin relocations, we can provide some guidance for other major German cities. 
+              Please specify your destination city in your inquiry, and we'll let you know how we can assist.
               </div>
             </div>
             </div>

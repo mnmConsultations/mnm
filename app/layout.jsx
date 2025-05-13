@@ -21,9 +21,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`min-h-screen ${fontSans.variable} font-mono`}>
-        <div className="container min-w-screen">
+        <div className="flex flex-col min-h-screen max-w[1280px]">
           <Header />
-          {children}
+          <main className="flex-grow">
+        {children}
+      </main>
           <Footer />
         </div>
       </body>

@@ -3,8 +3,8 @@ import { ClipboardCheck, ArrowRight } from "lucide-react";
 
 const ChecklistTeaser = () => {
   return (
-    <section className="bg-gradient-to-r from-primary to-blue-950 text-white">
-      <div className=" p-8 md:py-24 md:px-54">
+    <section className="bg-gradient-to-r from-primary to-blue-950 text-white py-16 px-4 md:py-24 md:px-8 lg:px-16">
+      <div className=" max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div>
             <div className="mb-6 inline-block p-3 bg-white/20 rounded-full">
