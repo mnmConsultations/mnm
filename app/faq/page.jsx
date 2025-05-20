@@ -10,37 +10,37 @@ const faqs = [
     {
       id: "2",
       question: "What services are included in the Essential Package?",
-      answer: "The Essential Package (€25,000/student) includes: Online Q&A Session (1-hour group Zoom), WhatsApp Support Group (6 months pre-arrival), Berlin Relocation Blueprint (10-part video series), Pre-Departure Starter Kit (Berlin map, O2 SIM card, phrasebook), Event Coordination & Group Integration (1 cultural event + 1 group introduction), and Orientation Bootcamp (2-day program for city registration, transport). Add-ons like airport pickups or Indian Welcome Packages are available for additional fees."
+      answer: "The Essential Package (₹25,000/student) includes: Online Q&A Session (1-hour group Zoom), WhatsApp Support Group (6 months pre-arrival), Berlin Relocation Blueprint (10-part video series), Pre-Departure Starter Kit (Berlin map, O2 SIM card, phrasebook), Event Coordination & Group Integration (1 cultural event + 1 group introduction), and Orientation Bootcamp (2-day program for city registration, transport). Add-ons like airport pickups or Indian Welcome Packages are available for additional fees."
     },
     {
       id: "3",
       question: "How does M&M Consultations ensure affordability?",
-      answer: "We provide a 50% fee reduction on pre-arrival services (e.g., Online Q&A at €1,500, Berlin Relocation Blueprint at €1,000). The Essential Package is priced at €25,000, and we promote cost-saving measures like public transport training (€5-€10 tickets vs. €50-€70 taxis). Our O2 partnership offers 50% off mobile plans (100-300 GB data)."
+      answer: "We provide a 50% fee reduction on pre-arrival services (e.g., Online Q&A at ₹1,500, Berlin Relocation Blueprint at ₹1,000). The Essential Package is priced at ₹25,000, and we promote cost-saving measures like public transport training (₹5-₹10 tickets vs. ₹50-₹70 taxis). Our O2 partnership offers 50% off mobile plans (100-300 GB data)."
     },
     {
       id: "4",
       question: "What is the airport pickup service, and how does it work?",
-      answer: "For €4,000, our airport pickup service guides students from Berlin Brandenburg Airport (BER) using public transport (e.g., FEX train, S-Bahn). A Berlin-based Indian advisor or student ambassador assists within 48 hours of arrival, teaching ticket purchasing and BVG app usage, with a 1-hour orientation en route."
+      answer: "For ₹4,000, our airport pickup service guides students from Berlin Brandenburg Airport (BER) using public transport (e.g., FEX train, S-Bahn). A Berlin-based Indian advisor or student ambassador assists within 48 hours of arrival, teaching ticket purchasing and BVG app usage, with a 1-hour orientation en route."
     },
     {
       id: "5",
       question: "What cultural events does M&M Consultations organize?",
-      answer: "We host monthly events (€2,500/event) like Holi, Diwali, and Bollywood nights, capped at 30 students for intimacy. These include Indian food and integration into groups like the Indian Student Association Berlin, promoted via Instagram and WhatsApp."
+      answer: "We host monthly events (₹2,500/event) like Holi, Diwali, and Bollywood nights, capped at 30 students for intimacy. These include Indian food and integration into groups like the Indian Student Association Berlin, promoted via Instagram and WhatsApp."
     },
     {
       id: "6",
       question: "How does the WhatsApp Support Group function?",
-      answer: "Included in the Essential Package or €1,500 individually, our WhatsApp Support Group offers 6 months of pre-arrival guidance on accommodation, finances, and emergencies. Moderated by our team, it guarantees responses within 12 hours, 24/7, with weekly tips and pinned FAQs."
+      answer: "Included in the Essential Package or ₹1,500 individually, our WhatsApp Support Group offers 6 months of pre-arrival guidance on accommodation, finances, and emergencies. Moderated by our team, it guarantees responses within 12 hours, 24/7, with weekly tips and pinned FAQs."
     },
     {
       id: "7",
       question: "What is the Indian Welcome Package?",
-      answer: "For €6,000, the Indian Welcome Package includes Indian spices (turmeric, cumin), basmati rice, lentils, a recipe booklet, and a map of Berlin's Indian stores. It's delivered within 1 week of arrival via local Indian suppliers."
+      answer: "For ₹6,000, the Indian Welcome Package includes Indian spices (turmeric, cumin), basmati rice, lentils, a recipe booklet, and a map of Berlin's Indian stores. It's delivered within 1 week of arrival via local Indian suppliers."
     },
     {
       id: "8",
       question: "Can I customize my service package?",
-      answer: "Yes, you can start with the Essential Package and add services like the Buddy Program (€7,500), Safety & Emergency Workshop (€2,000), or individual offerings like a 1-1 Pre-Departure Discussion (€2,000). Contact us to create a personalized plan."
+      answer: "Yes, you can start with the Essential Package and add services like the Buddy Program (₹7,500), Safety & Emergency Workshop (₹2,000), or individual offerings like a 1-1 Pre-Departure Discussion (₹2,000). Contact us to create a personalized plan."
     },
     {
       id: "9",
@@ -55,12 +55,12 @@ const faqs = [
     {
       id: "11",
       question: "Why is a blocked account required for a German student visa?",
-      answer: "A blocked account (Sperrkonto) proves to German authorities that you have sufficient funds (€11,904/year or €992/month in 2025) to cover living expenses. It's mandatory for non-EU students applying for a student visa."
+      answer: "A blocked account (Sperrkonto) proves to German authorities that you have sufficient funds (₹11,904/year or ₹992/month in 2025) to cover living expenses. It's mandatory for non-EU students applying for a student visa."
     },
     {
       id: "12",
       question: "Can M&M Consultations help with opening a blocked account?",
-      answer: "While we don't directly open blocked accounts, our 1-1 Pre-Departure Discussion (€2,000) and WhatsApp Support Group guide students through the process, recommending trusted providers like Expatrio or Fintiba."
+      answer: "While we don't directly open blocked accounts, our 1-1 Pre-Departure Discussion (₹2,000) and WhatsApp Support Group guide students through the process, recommending trusted providers like Expatrio or Fintiba."
     },
     {
       id: "13",
@@ -75,7 +75,7 @@ const faqs = [
     {
       id: "15",
       question: "Is health insurance mandatory in Germany?",
-      answer: "Yes, health insurance is required for all residents, including students. You need travel health insurance for your visa and public/private insurance upon arrival. Our team provides guidance during the 10-Day Post-Arrival Support (€5,000)."
+      answer: "Yes, health insurance is required for all residents, including students. You need travel health insurance for your visa and public/private insurance upon arrival. Our team provides guidance during the 10-Day Post-Arrival Support (₹5,000)."
     }
   ];
   
