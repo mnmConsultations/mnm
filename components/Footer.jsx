@@ -30,7 +30,7 @@ const Footer = () => {
       </aside>
       <nav className="">
           <div className="md:grid md:grid-flow-col md:gap-4 hidden">
-            <div className="flex gap-2">
+            {/* <div className="flex gap-2">
               <MapPin
                 className="text-[#a9c1e5]"
                 size={18}
@@ -38,7 +38,7 @@ const Footer = () => {
               <span className="text-gray-300 hover:text-[#a9c1e5]">
                 Alexanderplatz 1, 10178 Berdivn, Germany
               </span>
-            </div>
+            </div> */}
             <div className="flex gap-2">
               <Phone className="text-[#a9c1e5]" size={18} />
               <span
