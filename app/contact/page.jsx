@@ -200,6 +200,14 @@ const Contact = () => {
                          +91 9545099997
                         </a>
                       </p>
+                      <p className="text-gray-600">
+                        <a
+                          href="tel:+49 176 29732633"
+                          className="hover:text-primary"
+                        >
+                         +49 176 29732633
+                        </a>
+                      </p>  
                       <p className="text-gray-600 text-sm">
                         Monday to Friday, 9am - 6pm CET
                       </p>
