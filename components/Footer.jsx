@@ -49,6 +49,15 @@ const Footer = () => {
               </span>
             </div>
             <div className="flex gap-2">
+              <Phone className="text-[#a9c1e5]" size={18} />
+              <span
+                href="tel:+4917629732633"
+                className="text-gray-300 hover:text-[#a9c1e5]"
+              >
+                +49 176 29732633
+              </span>
+            </div>
+            <div className="flex gap-2">
               <Mail className="text-[#a9c1e5]" size={18} />
               <span
                 href="mailto:mnmconsultations+info@gmail.com"
