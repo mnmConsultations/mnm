@@ -16,7 +16,7 @@ const Header = () => {
       <div className=" max-w-7xl mx-auto px-4 flex justify-between items-center py-4">
         <Link href="/" className="flex items-center space-x-2">
           <img
-            src="/MnMFullLogo-removebg-preview.png"
+            src="/MnMLogo-removebg-preview.png"
             alt="M&M Consultations Logo"
             className="h-10 md:h-13"
           />
