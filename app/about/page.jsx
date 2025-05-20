@@ -152,16 +152,16 @@ const About = () => {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
             <div className="text-center">
               <div className="mb-4 overflow-hidden rounded-full w-48 h-48 mx-auto">
                 <img 
-                  src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?q=80&w=987&auto=format&fit=crop" 
+                  src="/Founder.jpg" 
                   alt="Mruddual Sojitra" 
                   className="w-full h-full object-cover"
                 />
               </div>
-              <h3 className="text-xl font-bold text-gray-900">Mruddual Sojitra</h3>
+              <h3 className="text-xl font-bold text-gray-900">Mayur Bafna</h3>
               <p className="text-primary">Founder & CEO</p>
             </div>
             
@@ -173,7 +173,7 @@ const About = () => {
                   className="w-full h-full object-cover"
                 />
               </div>
-              <h3 className="text-xl font-bold text-gray-900">Mayur Bafna</h3>
+              <h3 className="text-xl font-bold text-gray-900">Mruddual Sojitra</h3>
               <p className="text-primary">Operations Manager</p>
             </div>
             

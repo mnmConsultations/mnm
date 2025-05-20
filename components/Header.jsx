@@ -12,13 +12,13 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-neutral shadow-sm sticky top-0 z-50">
+    <header className="bg-blue-950 shadow-sm sticky top-0 z-50">
       <div className=" max-w-7xl mx-auto px-4 flex justify-between items-center py-4">
         <Link href="/" className="flex items-center space-x-2">
           <img
             src="/MnMFullLogo-removebg-preview.png"
             alt="M&M Consultations Logo"
-            className="h-9 md:h-11"
+            className="h-10 md:h-13"
           />
         </Link>
 

@@ -11,8 +11,8 @@ import {
 
 const Footer = () => {
   return (
-    <div className="bg-neutral">
-    <footer className="footer footer-horizontal footer-center bg-neutral text-neutral-content p-10 max-w-7xl mx-auto px-4">
+    <div className="bg-blue-950">
+    <footer className="footer footer-horizontal footer-center bg-blue-950 text-neutral-content p-10 max-w-7xl mx-auto px-4">
       <aside>
         <img
           src="/MnMFullLogo-removebg-preview.png"

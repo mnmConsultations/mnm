@@ -142,7 +142,7 @@ const Contact = () => {
                 </h2>
 
                 <div className="space-y-6">
-                  <div className="flex items-start">
+                  {/* <div className="flex items-start">
                     <div className="bg-blue-50 p-3 rounded-full mr-4">
                       <MapPin className="h-6 w-6 text-primary" />
                     </div>
@@ -155,7 +155,7 @@ const Contact = () => {
                         10178 Berlin, Germany
                       </p>
                     </div>
-                  </div>
+                  </div> */}
 
                   <div className="flex items-start">
                     <div className="bg-blue-50 p-3 rounded-full mr-4">

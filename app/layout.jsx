@@ -1,13 +1,13 @@
-import { Mona_Sans as FontSans } from 'next/font/google'
+import { Open_Sans  } from 'next/font/google'
 import "./globals.css";
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
-const fontSans = FontSans({
-  subsets: ["latin"],
-  variable: "--font-sans",
-})
+const openSans = Open_Sans({
+  subsets: ['latin'], // Specify the character subsets you need
+  variable: '--font-open-sans', // Define a CSS variable for easier use
+});
 
 export const metadata = {
   title: "M&M Consultants - Your Relocation Partner in Germany",
@@ -19,8 +19,8 @@ export default function RootLayout({
   children,
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`min-h-screen ${fontSans.variable} font-mono`}>
+    <html lang="en" suppressHydrationWarning className={openSans.variable}>
+      <body className={`min-h-screen`}>
         <div className="flex flex-col min-h-screen max-w[1280px]">
           <Header />
           <main className="flex-grow">

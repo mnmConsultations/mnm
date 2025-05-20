@@ -86,7 +86,7 @@ const services = [
       'Temporary accommodation recommendations',
       'Document preparation for rental applications'
     ],
-    src: "/local-orientation.png",
+    src: "/accomodation-help.png",
   },
   {
     id: 'transportation',

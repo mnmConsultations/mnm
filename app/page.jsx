@@ -12,7 +12,7 @@ export default function Home() {
       <ServicesHighlight />
       <PackagesOverview />
       <ChecklistTeaser />
-      <Testimonials />
+      {/* <Testimonials /> */}
       <CTA />
    </div>
   );
