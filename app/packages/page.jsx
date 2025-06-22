@@ -406,7 +406,7 @@ const Packages = () => {
               </div>
               <div className="collapse-content text-sm">
               We provide a 50% fee reduction on pre-arrival services, promote cost-effective solutions like 
-                  public transport (₹5-₹10 tickets vs. ₹50-₹70 taxis), and offer exclusive partnerships like 
+                  public transport (€5-€10 tickets vs. €50-€70 taxis), and offer exclusive partnerships like 
                   our O2 mobile plan with 50% off and 100-300 GB data.
               </div>
             </div>

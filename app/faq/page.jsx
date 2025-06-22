@@ -15,7 +15,7 @@ const faqs = [
     {
       id: "3",
       question: "How does M&M Consultations ensure affordability?",
-      answer: "We provide a 50% fee reduction on pre-arrival services (e.g., Online Q&A at ₹1,500, Berlin Relocation Blueprint at ₹1,000). The Essential Package is priced at ₹25,000, and we promote cost-saving measures like public transport training (₹5-₹10 tickets vs. ₹50-₹70 taxis). Our O2 partnership offers 50% off mobile plans (100-300 GB data)."
+      answer: "We provide a 50% fee reduction on pre-arrival services (e.g., Online Q&A at ₹1,500, Berlin Relocation Blueprint at ₹1,000). The Essential Package is priced at ₹25,000, and we promote cost-saving measures like public transport training (€5-€10 tickets vs. €50-€70 taxis). Our O2 partnership offers 50% off mobile plans (100-300 GB data)."
     },
     {
       id: "4",

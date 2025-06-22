@@ -168,13 +168,13 @@ const About = () => {
             <div className="text-center">
               <div className="mb-4 overflow-hidden rounded-full w-48 h-48 mx-auto">
                 <img 
-                  src="https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=987&auto=format&fit=crop" 
+                  src="/CoFounder.jpeg" 
                   alt="Mayur Bafna" 
                   className="w-full h-full object-cover"
                 />
               </div>
               <h3 className="text-xl font-bold text-gray-900">Mruddual Sojitra</h3>
-              <p className="text-primary">Operations Manager</p>
+              <p className="text-primary">Co-Founder & Operations Manager</p>
             </div>
             
           </div>
