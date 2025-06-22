@@ -24,9 +24,9 @@ export async function POST(request) {
     const { data, error } = await resend.emails.send({
       // Use a verified sender email address. Using the user's email directly
       // in 'from' can lead to delivery issues or be blocked.
-      from: 'Your Verified Sender <onboarding@resend.dev>', // CHANGE THIS to your verified Resend sender
+      from: `Enquiry! <onboarding@resend.dev>`, // CHANGE THIS to your verified Resend sender
       to: ['mnmconsultations@gmail.com'], // Your receiving email address
-      subject: `Contact Form Submission: ${content.subject}`,
+      subject: `Enquiry from ${content.name}: ${content.subject}`,
       react: EmailTemplate(content), // Pass the name to the EmailTemplate component
     });
 
