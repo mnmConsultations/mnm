@@ -69,12 +69,6 @@ const Contact = () => {
       };
 
       try {
-          // resend.emails.send({
-          //   from: 'onboarding@resend.dev',
-          //   to: 'mnmconsultations@gmail.com',
-          //   subject: 'Hello World',
-          //   html: '<p>Congrats on sending your <strong>first email</strong>!</p>'
-          // });
           const response = await fetch('/api/send-email', {
             method: 'POST',
             headers: {
@@ -84,9 +78,8 @@ const Contact = () => {
           });
   
           const data = await response.json();
-
           console.log(data);
-        if (true) {
+        if (data.success) {
           setSubmissionResult({
             success: true,
             message: "Message sent successfully!",
@@ -98,14 +91,14 @@ const Contact = () => {
           setMessage("");
           setErrors({});
         } else {
-          console.error("Resend API Error:", data);
+          console.log("API Error:", data.error);
           setSubmissionResult({
             success: false,
             message: `Failed to send message. ${data.error?.message || "Please try again later."}`,
           });
         }
       } catch (error) {
-        console.error("Fetch Error:", error);
+        console.log("Fetch Error:", error);
         setSubmissionResult({
           success: false,
           message: "An unexpected error occurred. Please try again later.",
@@ -353,13 +346,15 @@ const Contact = () => {
                   </div>
 
                   <div className="form-control mt-6">
-                    <button
-                      type="submit"
-                      className={`btn btn-primary text-neutral-content w-full ${isSubmitting ? "loading" : ""}`}
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? "Submitting..." : "Send Message"}
-                    </button>
+                    {isSubmitting ? 
+                    <button className="btn btn-primary w-full">
+                      <span className="loading loading-spinner"></span>
+                      </button> : <button
+                        type="submit"
+                        className={`btn btn-primary text-neutral-content w-full`}
+                        disabled={isSubmitting}>
+                      {isSubmitting ? "Submitting..." : "Sensd Message"}
+                    </button>}
                   </div>
 
                   {submissionResult && (
