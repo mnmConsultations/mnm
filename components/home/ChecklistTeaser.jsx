@@ -59,7 +59,7 @@ const ChecklistTeaser = () => {
                 <div className="flex items-center">
                   <input
                     type="checkbox"
-                    checked
+                    defaultChecked
                     className="h-5 w-5 rounded border-white/30 bg-white/20"
                   />
                   <span className="ml-3">Research visa requirements</span>
@@ -67,7 +67,7 @@ const ChecklistTeaser = () => {
                 <div className="flex items-center">
                   <input
                     type="checkbox"
-                    checked
+                    defaultChecked
                     className="h-5 w-5 rounded border-white/30 bg-white/20"
                   />
                   <span className="ml-3">Secure accommodation</span>

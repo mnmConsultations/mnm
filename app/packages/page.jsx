@@ -1,6 +1,8 @@
 "use client"
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { useLoggedInUser } from "@/lib/hooks/auth.hooks";
 import { Check, X } from "lucide-react";
 import Link from "next/link";
 
@@ -59,29 +61,21 @@ const additionalServices = [
 const popularIndex = packages.findIndex((pkg) => pkg.popular) ?? 0;
 
 const Packages = () => {
+  // Authentication hooks first
+  const router = useRouter();
+  const { data: user, isLoading } = useLoggedInUser();
+  
+  // All state hooks
+  const [isMountedAuth, setIsMountedAuth] = useState(false);
   const [activeIndex, setActiveIndex] = useState(popularIndex);
+  
+  // All ref hooks
   const carouselRef = useRef(null);
   const itemRefs = useRef([]);
   const isScrollingProgrammatically = useRef(false);
   const observerRef = useRef(null);
 
-  // --- Helper Functions from PackageOverview ---
-  const handleTabChange = (index) => {
-    if (index === activeIndex) return;
-
-    setActiveIndex(index);
-    const targetItem = itemRefs.current[index];
-    if (targetItem && carouselRef.current) {
-      isScrollingProgrammatically.current = true;
-      const scrollLeft = targetItem.offsetLeft - carouselRef.current.offsetLeft;
-      carouselRef.current.scrollTo({ left: scrollLeft, behavior: "smooth" });
-
-      setTimeout(() => {
-        isScrollingProgrammatically.current = false;
-      }, 600);
-    }
-  };
-
+  // All callback hooks
   const handleIntersection = useCallback(
     (entries) => {
       if (isScrollingProgrammatically.current) return;
@@ -100,7 +94,22 @@ const Packages = () => {
     [activeIndex],
   );
 
-  // --- useEffect Hooks from PackageOverview ---
+  // All useEffect hooks
+  useEffect(() => {
+    setIsMountedAuth(true);
+  }, []);
+
+  useEffect(() => {
+    // Redirect logged-in users to their dashboard
+    if (isMountedAuth && !isLoading && user) {
+      if (user.role === 'admin') {
+        router.push('/dashboard/admin');
+      } else {
+        router.push('/dashboard/user');
+      }
+    }
+  }, [user, isLoading, isMountedAuth, router]);
+
   useEffect(() => {
     const currentItemRefs = itemRefs.current.filter(Boolean);
     if (currentItemRefs.length === 0) return;
@@ -132,7 +141,6 @@ const Packages = () => {
         }
     }
 
-
     return () => {
       if (observerRef.current) {
         observerRef.current.disconnect();
@@ -146,6 +154,40 @@ const Packages = () => {
       itemRefs.current = [];
     };
   }, [packages.length]);
+
+  // Show loading state while checking authentication
+  if (!isMountedAuth || isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="loading loading-spinner loading-lg text-primary"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render content if user is logged in (will redirect)
+  if (user) {
+    return null;
+  }
+
+  // --- Helper Functions from PackageOverview ---
+  const handleTabChange = (index) => {
+    if (index === activeIndex) return;
+
+    setActiveIndex(index);
+    const targetItem = itemRefs.current[index];
+    if (targetItem && carouselRef.current) {
+      isScrollingProgrammatically.current = true;
+      const scrollLeft = targetItem.offsetLeft - carouselRef.current.offsetLeft;
+      carouselRef.current.scrollTo({ left: scrollLeft, behavior: "smooth" });
+
+      setTimeout(() => {
+        isScrollingProgrammatically.current = false;
+      }, 600);
+    }
+  };
   return (
     <div>
       <section className="bg-gradient-to-r from-blue-50 to-blue-100 py-16 md:py-24">

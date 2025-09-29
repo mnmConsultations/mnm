@@ -3,6 +3,7 @@ import "./globals.css";
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import QueryProvider from '../lib/providers/QueryProvider';
 
 const openSans = Open_Sans({
   subsets: ['latin'], // Specify the character subsets you need
@@ -21,13 +22,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={openSans.variable}>
       <body className={`min-h-screen`}>
-        <div className="flex flex-col min-h-screen max-w[1280px]">
-          <Header />
-          <main className="flex-grow">
-        {children}
-      </main>
-          <Footer />
-        </div>
+        <QueryProvider>
+          <div className="flex flex-col min-h-screen max-w[1280px]">
+            <Header />
+            <main className="flex-grow">
+          {children}
+        </main>
+            <Footer />
+          </div>
+        </QueryProvider>
       </body>
     </html>
   );
