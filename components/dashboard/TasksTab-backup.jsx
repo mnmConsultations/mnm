@@ -22,25 +22,43 @@ const TasksTab = ({ user }) => {
             const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
             const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
             
+            console.log('🔍 Fetching tasks data with token:', token ? 'Present' : 'Missing');
+            
             // Fetch categories
             const categoriesResponse = await fetch('/api/dashboard/categories', { headers });
+            console.log('📁 Categories response status:', categoriesResponse.status);
             if (categoriesResponse.ok) {
                 const categoriesData = await categoriesResponse.json();
+                console.log('📁 Categories data:', categoriesData);
+                console.log('📁 Categories array:', categoriesData.data);
+                console.log('📁 First category:', categoriesData.data[0]);
                 setCategories(categoriesData.data);
+            } else {
+                console.error('❌ Categories fetch failed:', categoriesResponse.status);
             }
 
             // Fetch tasks
             const tasksResponse = await fetch('/api/dashboard/tasks', { headers });
+            console.log('📋 Tasks response status:', tasksResponse.status);
             if (tasksResponse.ok) {
                 const tasksData = await tasksResponse.json();
+                console.log('📋 Tasks data:', tasksData);
+                console.log('📋 Tasks object keys:', Object.keys(tasksData.data));
+                console.log('📋 beforeArrival tasks:', tasksData.data.beforeArrival);
                 setTasks(tasksData.data);
+            } else {
+                console.error('❌ Tasks fetch failed:', tasksResponse.status);
             }
 
             // Fetch user progress
             const progressResponse = await fetch('/api/dashboard/progress', { headers });
+            console.log('📊 Progress response status:', progressResponse.status);
             if (progressResponse.ok) {
                 const progressData = await progressResponse.json();
+                console.log('📊 Progress data:', progressData);
                 setUserProgress(progressData.data);
+            } else {
+                console.error('❌ Progress fetch failed:', progressResponse.status);
             }
 
         } catch (error) {
@@ -102,8 +120,33 @@ const TasksTab = ({ user }) => {
         );
     }
 
+    // Debug: Show what data we have
+    console.log('🐛 TasksTab State:', { 
+        categoriesCount: categories.length, 
+        tasksKeys: Object.keys(tasks),
+        userProgress: userProgress ? 'Present' : 'Missing',
+        activeCategory 
+    });
+
     return (
         <div className="space-y-6">
+            {/* Debug Info - Remove this after fixing */}
+            <div className="alert alert-info">
+                <div className="w-full">
+                    <h3 className="font-bold">Debug Info:</h3>
+                    <p>Categories: {categories.length}</p>
+                    <p>Task Categories: {Object.keys(tasks).join(', ')}</p>
+                    <p>Active Category: {activeCategory}</p>
+                    <p>Tasks in active category: {tasks[activeCategory]?.length || 0}</p>
+                    <details className="mt-2">
+                        <summary className="cursor-pointer">View Full Data</summary>
+                        <pre className="text-xs mt-2 overflow-auto max-h-64">
+                            {JSON.stringify({ categories, tasks, activeCategory }, null, 2)}
+                        </pre>
+                    </details>
+                </div>
+            </div>
+            
             {/* Progress Overview */}
             <div className="card bg-base-100 shadow-xl">
                 <div className="card-body">
@@ -178,6 +221,8 @@ const TasksTab = ({ user }) => {
                                 <div className="space-y-3">
                                     {(() => {
                                         const categoryTasks = tasks[category.id];
+                                        console.log(`🔍 Rendering tasks for ${category.id}:`, categoryTasks);
+                                        console.log(`🔍 Tasks length:`, categoryTasks?.length);
                                         
                                         if (!categoryTasks || categoryTasks.length === 0) {
                                             return (
@@ -187,25 +232,8 @@ const TasksTab = ({ user }) => {
                                             );
                                         }
                                         
-                                        return categoryTasks.map((task) => {
-                                            return (
-                                        <div key={task.id} className="flex gap-3 items-start">
-                                            {/* Checkbox outside accordion */}
-                                            <div className="form-control pt-4">
-                                                <label className="cursor-pointer">
-                                                    <input 
-                                                        type="checkbox" 
-                                                        className="checkbox checkbox-primary"
-                                                        checked={isTaskCompleted(task.id)}
-                                                        onChange={(e) => {
-                                                            handleTaskToggle(task.id, e.target.checked);
-                                                        }}
-                                                    />
-                                                </label>
-                                            </div>
-
-                                            {/* Accordion */}
-                                            <div className="collapse collapse-arrow bg-base-200 flex-1">
+                                        return categoryTasks.map((task) => (
+                                        <div key={task.id} className="collapse collapse-arrow bg-base-200">
                                             <input 
                                                 type="checkbox" 
                                                 checked={expandedTasks[task.id] || false}
@@ -214,6 +242,19 @@ const TasksTab = ({ user }) => {
                                             <div className="collapse-title">
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center space-x-3">
+                                                        <div className="form-control">
+                                                            <label className="cursor-pointer label">
+                                                                <input 
+                                                                    type="checkbox" 
+                                                                    className="checkbox checkbox-primary"
+                                                                    checked={isTaskCompleted(task.id)}
+                                                                    onChange={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleTaskToggle(task.id, e.target.checked);
+                                                                    }}
+                                                                />
+                                                            </label>
+                                                        </div>
                                                         <div>
                                                             <h4 className={`font-semibold ${isTaskCompleted(task.id) ? 'line-through text-base-content/50' : ''}`}>
                                                                 {task.title}
@@ -298,9 +339,7 @@ const TasksTab = ({ user }) => {
                                                 </div>
                                             </div>
                                         </div>
-                                        </div>
-                                            );
-                                        });
+                                        ));
                                     })()}
                                 </div>
                             </div>

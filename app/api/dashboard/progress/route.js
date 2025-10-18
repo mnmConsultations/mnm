@@ -8,16 +8,28 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-fallback-secret';
 
 async function getUserFromToken(request) {
   try {
-    const token = request.cookies.get('token')?.value;
+    // Try to get token from Authorization header first
+    const authHeader = request.headers.get('authorization');
+    let token = null;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    } else {
+      // Fallback to cookie
+      token = request.cookies.get('token')?.value;
+    }
+    
     if (!token) {
       return null;
     }
     
     const decoded = jwt.verify(token, JWT_SECRET);
     await connectDB();
-    const user = await User.findById(decoded.userId);
+    // The token payload uses _id, not userId
+    const user = await User.findById(decoded._id);
     return user;
   } catch (error) {
+    console.error('Error getting user from token:', error);
     return null;
   }
 }

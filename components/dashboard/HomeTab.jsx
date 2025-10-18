@@ -15,15 +15,19 @@ const HomeTab = ({ user }) => {
         try {
             setLoading(true);
             
+            // Get token from localStorage
+            const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            
             // Fetch user progress
-            const progressResponse = await fetch('/api/dashboard/progress');
+            const progressResponse = await fetch('/api/dashboard/progress', { headers });
             if (progressResponse.ok) {
                 const progressData = await progressResponse.json();
                 setUserProgress(progressData.data);
             }
 
             // Fetch notifications
-            const notificationsResponse = await fetch('/api/dashboard/notifications?limit=5');
+            const notificationsResponse = await fetch('/api/dashboard/notifications?limit=5', { headers });
             if (notificationsResponse.ok) {
                 const notificationsData = await notificationsResponse.json();
                 setNotifications(notificationsData.data.notifications);
@@ -43,7 +47,7 @@ const HomeTab = ({ user }) => {
             </div>
         );
     }
-
+    
     return (
         <div className="grid grid-cols-1 xl:grid-cols-10 gap-6">
             {/* Main Section - 70% */}

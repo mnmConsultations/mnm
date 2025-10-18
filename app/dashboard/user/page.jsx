@@ -107,7 +107,7 @@ const UserDashboard = () => {
                 </div>
 
                 {/* Tab Content */}
-                <div className="tab-content">
+                <div className="mt-6">
                     {activeTab === 'home' && <HomeTab user={user} />}
                     {activeTab === 'tasks' && <TasksTab user={user} />}
                 </div>
