@@ -3,12 +3,15 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLoggedInUser, useSignOut } from '../../../lib/hooks/auth.hooks';
+import HomeTab from '../../../components/dashboard/HomeTab';
+import TasksTab from '../../../components/dashboard/TasksTab';
 
 const UserDashboard = () => {
     const router = useRouter();
     const { data: user, isLoading } = useLoggedInUser();
     const { mutate: signOut } = useSignOut();
     const [isMounted, setIsMounted] = useState(false);
+    const [activeTab, setActiveTab] = useState('home');
 
     useEffect(() => {
         setIsMounted(true);
@@ -43,6 +46,7 @@ const UserDashboard = () => {
 
     return (
         <div className="min-h-screen bg-base-200">
+            {/* Navigation Bar */}
             <div className="navbar bg-base-100 shadow-lg">
                 <div className="flex-1">
                     <h1 className="text-xl font-bold">M&M Consultants - User Dashboard</h1>
@@ -68,8 +72,10 @@ const UserDashboard = () => {
                 </div>
             </div>
 
-            <div className="container mx-auto px-4 py-8">
-                <div className="mb-8">
+            {/* Main Content */}
+            <div className="container mx-auto px-4 py-6">
+                {/* Welcome Section */}
+                <div className="mb-6">
                     <h2 className="text-3xl font-bold mb-2">
                         Welcome, {user.firstName} {user.lastName}!
                     </h2>
@@ -78,91 +84,32 @@ const UserDashboard = () => {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* User Info Card */}
-                    <div className="card bg-base-100 shadow-xl">
-                        <div className="card-body">
-                            <h3 className="card-title">Your Information</h3>
-                            <div className="space-y-2">
-                                <p><strong>Name:</strong> {user.firstName} {user.lastName}</p>
-                                <p><strong>Email:</strong> {user.email}</p>
-                                <p><strong>Role:</strong> {user.role}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Services Card */}
-                    <div className="card bg-base-100 shadow-xl">
-                        <div className="card-body">
-                            <h3 className="card-title">Your Services</h3>
-                            <p>Access your relocation services and track progress.</p>
-                            <div className="card-actions justify-end">
-                                <button className="btn btn-primary btn-sm">
-                                    View Services
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Support Card */}
-                    <div className="card bg-base-100 shadow-xl">
-                        <div className="card-body">
-                            <h3 className="card-title">Support</h3>
-                            <p>Get help with your relocation process.</p>
-                            <div className="card-actions justify-end">
-                                <button className="btn btn-secondary btn-sm">
-                                    Contact Support
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Documents Card */}
-                    <div className="card bg-base-100 shadow-xl">
-                        <div className="card-body">
-                            <h3 className="card-title">Documents</h3>
-                            <p>Manage your relocation documents.</p>
-                            <div className="card-actions justify-end">
-                                <button className="btn btn-accent btn-sm">
-                                    View Documents
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Appointments Card */}
-                    <div className="card bg-base-100 shadow-xl">
-                        <div className="card-body">
-                            <h3 className="card-title">Appointments</h3>
-                            <p>Schedule and manage your appointments.</p>
-                            <div className="card-actions justify-end">
-                                <button className="btn btn-info btn-sm">
-                                    Book Appointment
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Progress Card */}
-                    <div className="card bg-base-100 shadow-xl">
-                        <div className="card-body">
-                            <h3 className="card-title">Relocation Progress</h3>
-                            <p>Track your relocation journey.</p>
-                            <div className="progress-bar mt-4">
-                                <progress className="progress progress-primary w-full" value="25" max="100"></progress>
-                                <p className="text-sm mt-2">25% Complete</p>
-                            </div>
-                        </div>
-                    </div>
+                {/* Tab Navigation */}
+                <div className="tabs tabs-boxed mb-6 bg-base-100 p-1">
+                    <a 
+                        className={`tab tab-lg ${activeTab === 'home' ? 'tab-active' : ''}`}
+                        onClick={() => setActiveTab('home')}
+                    >
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                        Home
+                    </a>
+                    <a 
+                        className={`tab tab-lg ${activeTab === 'tasks' ? 'tab-active' : ''}`}
+                        onClick={() => setActiveTab('tasks')}
+                    >
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        </svg>
+                        Tasks
+                    </a>
                 </div>
 
-                <div className="mt-8">
-                    <div className="alert alert-info">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <span>This is a basic dashboard. More features will be added as we develop the platform further.</span>
-                    </div>
+                {/* Tab Content */}
+                <div className="tab-content">
+                    {activeTab === 'home' && <HomeTab user={user} />}
+                    {activeTab === 'tasks' && <TasksTab user={user} />}
                 </div>
             </div>
         </div>
