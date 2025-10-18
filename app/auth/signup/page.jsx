@@ -100,6 +100,13 @@ const SignupPage = () => {
     };
 
     // Show loading until component is mounted to prevent hydration mismatch
+    // isMounted prevents hydration mismatch by rendering client-only UI
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     if (!isMounted || isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
