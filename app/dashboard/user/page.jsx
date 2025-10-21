@@ -44,14 +44,33 @@ const UserDashboard = () => {
         return null; // Will redirect to signin
     }
 
+    // Check if user has active paid plan
+    const userPackage = user.package || 'free'; // Default to free if undefined
+    const hasActivePaidPlan = userPackage !== 'free' && 
+                               user.packageExpiresAt && 
+                               new Date(user.packageExpiresAt) > new Date();
+
     return (
         <div className="min-h-screen bg-base-200">
             {/* Navigation Bar */}
             <div className="navbar bg-base-100 shadow-lg">
                 <div className="flex-1">
-                    <h1 className="text-xl font-bold">M&M Consultants - User Dashboard</h1>
+                    <a href="/" className="btn btn-ghost normal-case text-xl">
+                        <img
+                            src="/MnMLogo-removebg-preview.png"
+                            alt="M&M Logo"
+                            className="h-8"
+                        />
+                    </a>
+                    <h1 className="text-xl font-bold ml-2">User Dashboard</h1>
                 </div>
                 <div className="flex-none gap-2">
+                    <a href="/" className="btn btn-ghost btn-sm hidden md:flex">
+                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                        Back to Website
+                    </a>
                     <div className="dropdown dropdown-end">
                         <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
                             <div className="w-10 rounded-full bg-primary text-primary-content flex items-center justify-center">
@@ -59,6 +78,17 @@ const UserDashboard = () => {
                             </div>
                         </div>
                         <ul tabIndex={0} className="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52">
+                            <li className="menu-title">
+                                <span>{user.firstName} {user.lastName}</span>
+                            </li>
+                            <li>
+                                <a href="/">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                                    </svg>
+                                    Back to Website
+                                </a>
+                            </li>
                             <li>
                                 <a className="justify-between">
                                     Profile
@@ -80,7 +110,18 @@ const UserDashboard = () => {
                         Welcome, {user.firstName} {user.lastName}!
                     </h2>
                     <p className="text-base-content/70">
-                        Role: <span className="badge badge-primary">{user.role.toUpperCase()}</span>
+                        Role: <span className="badge badge-primary">{user.role?.toUpperCase() || 'USER'}</span>
+                        {' | '}
+                        Plan: <span className={`badge ${
+                            userPackage === 'free' ? 'badge-ghost' :
+                            userPackage === 'basic' ? 'badge-info' :
+                            'badge-success'
+                        }`}>
+                            {userPackage.toUpperCase()}
+                        </span>
+                        {!hasActivePaidPlan && userPackage !== 'free' && (
+                            <span className="badge badge-error ml-2">EXPIRED</span>
+                        )}
                     </p>
                 </div>
 

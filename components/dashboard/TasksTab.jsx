@@ -9,6 +9,7 @@ const TasksTab = ({ user }) => {
     const [activeCategory, setActiveCategory] = useState('beforeArrival');
     const [loading, setLoading] = useState(true);
     const [expandedTasks, setExpandedTasks] = useState({});
+    const [requiresPaidPlan, setRequiresPaidPlan] = useState(false);
 
     useEffect(() => {
         fetchTasksData();
@@ -24,6 +25,14 @@ const TasksTab = ({ user }) => {
             
             // Fetch categories
             const categoriesResponse = await fetch('/api/dashboard/categories', { headers });
+            if (categoriesResponse.status === 403) {
+                const data = await categoriesResponse.json();
+                if (data.requiresPaidPlan) {
+                    setRequiresPaidPlan(true);
+                    setLoading(false);
+                    return;
+                }
+            }
             if (categoriesResponse.ok) {
                 const categoriesData = await categoriesResponse.json();
                 setCategories(categoriesData.data);
@@ -31,6 +40,14 @@ const TasksTab = ({ user }) => {
 
             // Fetch tasks
             const tasksResponse = await fetch('/api/dashboard/tasks', { headers });
+            if (tasksResponse.status === 403) {
+                const data = await tasksResponse.json();
+                if (data.requiresPaidPlan) {
+                    setRequiresPaidPlan(true);
+                    setLoading(false);
+                    return;
+                }
+            }
             if (tasksResponse.ok) {
                 const tasksData = await tasksResponse.json();
                 setTasks(tasksData.data);
@@ -102,6 +119,103 @@ const TasksTab = ({ user }) => {
         );
     }
 
+    // Show paywall for free users
+    if (requiresPaidPlan) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <div className="card bg-base-100 shadow-2xl max-w-2xl">
+                    <div className="card-body text-center">
+                        <div className="flex justify-center mb-6">
+                            <svg className="w-24 h-24 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                        </div>
+                        <h2 className="card-title text-3xl justify-center mb-4">
+                            Upgrade to Access Tasks
+                        </h2>
+                        <p className="text-lg text-base-content/70 mb-6">
+                            Access to our comprehensive relocation task checklist is available only to our paid plan members.
+                        </p>
+                        
+                        <div className="alert alert-info mb-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span>Upgrade to Basic or Plus plan to unlock all relocation tasks and features!</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div className="card bg-base-200">
+                                <div className="card-body">
+                                    <h3 className="font-bold text-xl mb-2">Basic Plan</h3>
+                                    <ul className="text-left space-y-2 text-sm">
+                                        <li className="flex items-center">
+                                            <svg className="w-5 h-5 text-success mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Complete task checklist
+                                        </li>
+                                        <li className="flex items-center">
+                                            <svg className="w-5 h-5 text-success mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Progress tracking
+                                        </li>
+                                        <li className="flex items-center">
+                                            <svg className="w-5 h-5 text-success mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Email support
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div className="card bg-base-200 border-2 border-primary">
+                                <div className="badge badge-primary absolute top-0 right-0 m-2">Popular</div>
+                                <div className="card-body">
+                                    <h3 className="font-bold text-xl mb-2">Plus Plan</h3>
+                                    <ul className="text-left space-y-2 text-sm">
+                                        <li className="flex items-center">
+                                            <svg className="w-5 h-5 text-success mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Everything in Basic
+                                        </li>
+                                        <li className="flex items-center">
+                                            <svg className="w-5 h-5 text-success mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Priority support
+                                        </li>
+                                        <li className="flex items-center">
+                                            <svg className="w-5 h-5 text-success mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Personal consultation
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="card-actions justify-center">
+                            <a href="/packages" className="btn btn-primary btn-lg">
+                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                View Plans & Pricing
+                            </a>
+                            <a href="/contact" className="btn btn-outline btn-lg">
+                                Contact Us
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+    
     return (
         <div className="space-y-6">
             {/* Progress Overview */}

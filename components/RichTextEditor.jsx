@@ -153,6 +153,7 @@ const RichTextEditor = ({ content, onChange, placeholder = 'Write your content h
       const html = editor.getHTML();
       onChange?.(html);
     },
+    immediatelyRender: false,
   });
 
   useEffect(() => {

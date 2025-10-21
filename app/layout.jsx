@@ -1,8 +1,7 @@
 import { Open_Sans  } from 'next/font/google'
 import "./globals.css";
 
-import Header from '../components/Header';
-import Footer from '../components/Footer';
+import ConditionalLayout from '../components/ConditionalLayout';
 import QueryProvider from '../lib/providers/QueryProvider';
 
 const openSans = Open_Sans({
@@ -23,13 +22,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={openSans.variable}>
       <body className={`min-h-screen`}>
         <QueryProvider>
-          <div className="flex flex-col min-h-screen max-w[1280px]">
-            <Header />
-            <main className="flex-grow">
-          {children}
-        </main>
-            <Footer />
-          </div>
+          <ConditionalLayout>
+            {children}
+          </ConditionalLayout>
         </QueryProvider>
       </body>
     </html>

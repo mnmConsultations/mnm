@@ -43,7 +43,10 @@ export async function GET(request) {
           firstName: user.firstName,
           lastName: user.lastName,
           email: user.email,
-          role: user.role
+          role: user.role,
+          package: user.package,
+          packageActivatedAt: user.packageActivatedAt,
+          packageExpiresAt: user.packageExpiresAt
         }
       }
     }, { status: 200 });

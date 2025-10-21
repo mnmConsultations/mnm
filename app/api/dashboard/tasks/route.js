@@ -2,9 +2,25 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/utils/db';
 import Task from '@/lib/models/task.model';
 import seedData from '@/lib/data/seedData';
+import { verifyUserAuth, hasActivePaidPlan } from '@/lib/middleware/userAuth';
 
 export async function GET(request) {
   try {
+    // Verify user authentication and check for paid plan
+    const user = await verifyUserAuth(request);
+    
+    // Check if user has an active paid plan
+    if (!hasActivePaidPlan(user)) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Access denied. Please upgrade to a paid plan to access tasks.',
+          requiresPaidPlan: true 
+        },
+        { status: 403 }
+      );
+    }
+    
     await connectDB();
     
     // Check if tasks exist, if not seed them
@@ -35,8 +51,8 @@ export async function GET(request) {
   } catch (error) {
     console.error('Error fetching tasks:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: error.message || 'Internal server error' },
+      { status: error.message?.includes('token') ? 401 : 500 }
     );
   }
 }
