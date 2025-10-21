@@ -3,6 +3,8 @@ import "./globals.css";
 
 import ConditionalLayout from '../components/ConditionalLayout';
 import QueryProvider from '../lib/providers/QueryProvider';
+import { ToastProvider } from '../components/Toast';
+import { ConfirmDialogProvider } from '../components/ConfirmDialog';
 
 const openSans = Open_Sans({
   subsets: ['latin'], // Specify the character subsets you need
@@ -22,9 +24,13 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={openSans.variable}>
       <body className={`min-h-screen`}>
         <QueryProvider>
-          <ConditionalLayout>
-            {children}
-          </ConditionalLayout>
+          <ToastProvider>
+            <ConfirmDialogProvider>
+              <ConditionalLayout>
+                {children}
+              </ConditionalLayout>
+            </ConfirmDialogProvider>
+          </ToastProvider>
         </QueryProvider>
       </body>
     </html>

@@ -1,71 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
-const TasksTab = ({ user }) => {
-    const [categories, setCategories] = useState([]);
-    const [tasks, setTasks] = useState({});
-    const [userProgress, setUserProgress] = useState(null);
+const TasksTab = ({ user, cachedData, isLoading, onProgressUpdate, onRefresh }) => {
+    const categories = cachedData?.categories || [];
+    const tasks = cachedData?.tasks || {};
+    const userProgress = cachedData?.userProgress;
+    const requiresPaidPlan = cachedData?.requiresPaidPlan || false;
+    
     const [activeCategory, setActiveCategory] = useState('beforeArrival');
-    const [loading, setLoading] = useState(true);
     const [expandedTasks, setExpandedTasks] = useState({});
-    const [requiresPaidPlan, setRequiresPaidPlan] = useState(false);
-
-    useEffect(() => {
-        fetchTasksData();
-    }, []);
-
-    const fetchTasksData = async () => {
-        try {
-            setLoading(true);
-            
-            // Get token from localStorage
-            const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-            
-            // Fetch categories
-            const categoriesResponse = await fetch('/api/dashboard/categories', { headers });
-            if (categoriesResponse.status === 403) {
-                const data = await categoriesResponse.json();
-                if (data.requiresPaidPlan) {
-                    setRequiresPaidPlan(true);
-                    setLoading(false);
-                    return;
-                }
-            }
-            if (categoriesResponse.ok) {
-                const categoriesData = await categoriesResponse.json();
-                setCategories(categoriesData.data);
-            }
-
-            // Fetch tasks
-            const tasksResponse = await fetch('/api/dashboard/tasks', { headers });
-            if (tasksResponse.status === 403) {
-                const data = await tasksResponse.json();
-                if (data.requiresPaidPlan) {
-                    setRequiresPaidPlan(true);
-                    setLoading(false);
-                    return;
-                }
-            }
-            if (tasksResponse.ok) {
-                const tasksData = await tasksResponse.json();
-                setTasks(tasksData.data);
-            }
-
-            // Fetch user progress
-            const progressResponse = await fetch('/api/dashboard/progress', { headers });
-            if (progressResponse.ok) {
-                const progressData = await progressResponse.json();
-                setUserProgress(progressData.data);
-            }
-
-        } catch (error) {
-            console.error('Error fetching tasks data:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleTaskToggle = async (taskId, completed) => {
         try {
@@ -84,7 +28,8 @@ const TasksTab = ({ user }) => {
 
             if (response.ok) {
                 const updatedProgress = await response.json();
-                setUserProgress(updatedProgress.data);
+                // Update parent cache instead of local state
+                onProgressUpdate(updatedProgress.data);
             }
         } catch (error) {
             console.error('Error updating task progress:', error);
@@ -111,7 +56,7 @@ const TasksTab = ({ user }) => {
         return categoryTasks.length > 0 ? Math.round((completedTasks.length / categoryTasks.length) * 100) : 0;
     };
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="flex items-center justify-center py-12">
                 <div className="loading loading-spinner loading-lg"></div>

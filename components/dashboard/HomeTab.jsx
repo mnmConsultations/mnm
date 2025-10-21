@@ -1,46 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+const HomeTab = ({ user, cachedData, isLoading, onRefresh }) => {
+    const userProgress = cachedData?.userProgress;
+    const notifications = cachedData?.notifications || [];
 
-const HomeTab = ({ user }) => {
-    const [userProgress, setUserProgress] = useState(null);
-    const [notifications, setNotifications] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        fetchDashboardData();
-    }, []);
-
-    const fetchDashboardData = async () => {
-        try {
-            setLoading(true);
-            
-            // Get token from localStorage
-            const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-            
-            // Fetch user progress
-            const progressResponse = await fetch('/api/dashboard/progress', { headers });
-            if (progressResponse.ok) {
-                const progressData = await progressResponse.json();
-                setUserProgress(progressData.data);
-            }
-
-            // Fetch notifications
-            const notificationsResponse = await fetch('/api/dashboard/notifications?limit=5', { headers });
-            if (notificationsResponse.ok) {
-                const notificationsData = await notificationsResponse.json();
-                setNotifications(notificationsData.data.notifications);
-            }
-
-        } catch (error) {
-            console.error('Error fetching dashboard data:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="flex items-center justify-center py-12">
                 <div className="loading loading-spinner loading-lg"></div>

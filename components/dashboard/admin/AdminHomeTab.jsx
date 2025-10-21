@@ -2,8 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { apiInstance as axios } from '../../../lib/utils/axios';
+import { useToast } from '../../Toast';
+import { useConfirmDialog } from '../../ConfirmDialog';
 
 const AdminHomeTab = () => {
+  const toast = useToast();
+  const { confirm } = useConfirmDialog();
   const [paidUserCount, setPaidUserCount] = useState(0);
   const [searchEmail, setSearchEmail] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -12,6 +16,14 @@ const AdminHomeTab = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [hasPreviousPage, setHasPreviousPage] = useState(false);
+  const [isEditingUser, setIsEditingUser] = useState(false);
+  const [tempUserData, setTempUserData] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     fetchPaidUserCount();
@@ -26,84 +38,157 @@ const AdminHomeTab = () => {
       }
     } catch (error) {
       console.error('Error fetching paid user count:', error);
-      alert('Failed to fetch paid user count');
+      toast.error('Failed to fetch paid user count');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSearch = async () => {
+  const handleSearch = async (page = 1) => {
     if (!searchEmail.trim()) {
+      toast.warning('Please enter an email to search');
       setSearchResults([]);
+      setCurrentPage(1);
+      setTotalPages(0);
+      setTotalCount(0);
       return;
     }
 
     try {
       setIsSearching(true);
-      const response = await axios.get(`/api/admin/users/search?email=${encodeURIComponent(searchEmail)}`);
+      const response = await axios.get(`/api/admin/users/search?email=${encodeURIComponent(searchEmail)}&page=${page}`);
       if (response.data.success) {
         setSearchResults(response.data.users);
+        setCurrentPage(response.data.page);
+        setTotalPages(response.data.totalPages);
+        setTotalCount(response.data.totalCount);
+        setHasNextPage(response.data.hasNextPage);
+        setHasPreviousPage(response.data.hasPreviousPage);
+        
+        if (response.data.totalCount === 0) {
+          toast.info('No users found with that email');
+        } else if (page === 1) {
+          toast.success(`Found ${response.data.totalCount} user${response.data.totalCount !== 1 ? 's' : ''}`);
+        }
       }
     } catch (error) {
       console.error('Error searching users:', error);
-      alert('Failed to search users');
+      toast.error('Failed to search users');
     } finally {
       setIsSearching(false);
     }
   };
 
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      handleSearch(newPage);
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchEmail('');
+    setSearchResults([]);
+    setSelectedUser(null);
+    setCurrentPage(1);
+    setTotalPages(0);
+    setTotalCount(0);
+    setHasNextPage(false);
+    setHasPreviousPage(false);
+  };
+
   const handleDeleteUser = async (userId, userEmail, userPackage, packageExpiresAt) => {
     // Check if user has active plan
     if (userPackage !== 'free' && packageExpiresAt && new Date(packageExpiresAt) > new Date()) {
-      alert('Cannot delete user with active plan');
+      toast.warning('Cannot delete user with active plan');
       return;
     }
 
-    if (!confirm(`Are you sure you want to delete user ${userEmail}?`)) {
-      return;
-    }
+    const confirmed = await confirm({
+      title: 'Delete User',
+      message: `Are you sure you want to delete user ${userEmail}? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      type: 'danger',
+    });
+
+    if (!confirmed) return;
 
     try {
       setIsDeleting(true);
       const response = await axios.delete(`/api/admin/users/${userId}`);
       if (response.data.success) {
-        alert('User deleted successfully');
+        toast.success('User deleted successfully');
         // Remove from search results
         setSearchResults(searchResults.filter(u => u._id !== userId));
         setSelectedUser(null);
       }
     } catch (error) {
       console.error('Error deleting user:', error);
-      alert(error.response?.data?.error || 'Failed to delete user');
+      toast.error(error.response?.data?.error || 'Failed to delete user');
     } finally {
       setIsDeleting(false);
     }
   };
 
-  const handleUpdatePackage = async (userId, newPackage) => {
-    if (!confirm(`Are you sure you want to change this user's package to ${newPackage}?`)) {
+  const handleEditUser = () => {
+    setIsEditingUser(true);
+    setTempUserData({
+      package: selectedUser.package
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingUser(false);
+    setTempUserData(null);
+  };
+
+  const handlePackageChange = (newPackage) => {
+    setTempUserData({
+      ...tempUserData,
+      package: newPackage
+    });
+  };
+
+  const handleSaveUserChanges = async () => {
+    // Check if anything changed
+    if (tempUserData.package === selectedUser.package) {
+      toast.info('No changes to save');
+      setIsEditingUser(false);
+      setTempUserData(null);
       return;
     }
 
+    const confirmed = await confirm({
+      title: 'Save User Changes',
+      message: `Are you sure you want to change this user's package from ${selectedUser.package.toUpperCase()} to ${tempUserData.package.toUpperCase()}?`,
+      confirmText: 'Save Changes',
+      cancelText: 'Cancel',
+      type: 'info',
+    });
+
+    if (!confirmed) return;
+
     try {
-      setIsUpdating(true);
-      const response = await axios.patch(`/api/admin/users/${userId}`, {
-        package: newPackage,
+      setIsSaving(true);
+      const response = await axios.patch(`/api/admin/users/${selectedUser._id}`, {
+        package: tempUserData.package,
       });
       if (response.data.success) {
-        alert('User package updated successfully');
+        toast.success('User package updated successfully');
         // Update search results
         setSearchResults(searchResults.map(u => 
-          u._id === userId ? response.data.user : u
+          u._id === selectedUser._id ? response.data.user : u
         ));
         setSelectedUser(response.data.user);
         setPaidUserCount(response.data.paidUserCount);
+        setIsEditingUser(false);
+        setTempUserData(null);
       }
     } catch (error) {
       console.error('Error updating user package:', error);
-      alert(error.response?.data?.error || 'Failed to update user package');
+      toast.error(error.response?.data?.error || 'Failed to update user package');
     } finally {
-      setIsUpdating(false);
+      setIsSaving(false);
     }
   };
 
@@ -148,14 +233,31 @@ const AdminHomeTab = () => {
               <button
                 className="btn btn-primary"
                 onClick={handleSearch}
-                disabled={isSearching}
+                disabled={isSearching || !searchEmail.trim()}
               >
                 {isSearching ? (
                   <span className="loading loading-spinner"></span>
                 ) : (
-                  'Search'
+                  <>
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    Search
+                  </>
                 )}
               </button>
+              {(searchEmail || searchResults.length > 0) && (
+                <button
+                  className="btn btn-ghost"
+                  onClick={handleClearSearch}
+                  disabled={isSearching}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Clear
+                </button>
+              )}
             </div>
           </div>
 
@@ -207,12 +309,49 @@ const AdminHomeTab = () => {
                   </tbody>
                 </table>
               </div>
-            </div>
-          ) : searchEmail && !isSearching ? (
-            <div className="alert alert-info mt-4">
-              <span>No users found with this email</span>
+              
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4">
+                  <div className="text-sm text-base-content/70">
+                    Showing {((currentPage - 1) * 10) + 1} to {Math.min(currentPage * 10, totalCount)} of {totalCount} users
+                  </div>
+                  <div className="join">
+                    <button 
+                      className="join-item btn btn-sm"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={!hasPreviousPage || isSearching}
+                    >
+                      «
+                    </button>
+                    <button className="join-item btn btn-sm">
+                      Page {currentPage} of {totalPages}
+                    </button>
+                    <button 
+                      className="join-item btn btn-sm"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={!hasNextPage || isSearching}
+                    >
+                      »
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ) : null}
+          
+          {/* Help Text */}
+          {!searchEmail && searchResults.length === 0 && (
+            <div className="alert alert-info mt-4">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <div>
+                <p className="font-semibold">Search for users by email address</p>
+                <p className="text-sm mt-2">Press Enter or click Search to find users (10 results per page, admin accounts excluded)</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -220,7 +359,17 @@ const AdminHomeTab = () => {
       {selectedUser && (
         <dialog className="modal modal-open">
           <div className="modal-box max-w-2xl">
-            <h3 className="font-bold text-lg mb-4">Manage User</h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-lg">Manage User</h3>
+              {!isEditingUser && (
+                <button
+                  className="btn btn-outline btn-sm"
+                  onClick={handleEditUser}
+                >
+                  Edit Package
+                </button>
+              )}
+            </div>
             
             <div className="space-y-4">
               <div>
@@ -238,11 +387,11 @@ const AdminHomeTab = () => {
               <div>
                 <p className="font-semibold">Current Package:</p>
                 <p className={`badge ${
-                  selectedUser.package === 'free' ? 'badge-ghost' :
-                  selectedUser.package === 'basic' ? 'badge-info' :
+                  (isEditingUser ? tempUserData.package : selectedUser.package) === 'free' ? 'badge-ghost' :
+                  (isEditingUser ? tempUserData.package : selectedUser.package) === 'basic' ? 'badge-info' :
                   'badge-success'
                 }`}>
-                  {selectedUser.package.toUpperCase()}
+                  {(isEditingUser ? tempUserData.package : selectedUser.package).toUpperCase()}
                 </p>
               </div>
               {selectedUser.packageExpiresAt && (
@@ -262,32 +411,42 @@ const AdminHomeTab = () => {
 
               <div className="divider"></div>
 
-              <div>
-                <p className="font-semibold mb-2">Change Package:</p>
-                <div className="flex gap-2">
-                  <button
-                    className="btn btn-sm btn-outline"
-                    onClick={() => handleUpdatePackage(selectedUser._id, 'free')}
-                    disabled={selectedUser.package === 'free' || isUpdating}
-                  >
-                    Free
-                  </button>
-                  <button
-                    className="btn btn-sm btn-info"
-                    onClick={() => handleUpdatePackage(selectedUser._id, 'basic')}
-                    disabled={selectedUser.package === 'basic' || isUpdating}
-                  >
-                    Basic
-                  </button>
-                  <button
-                    className="btn btn-sm btn-success"
-                    onClick={() => handleUpdatePackage(selectedUser._id, 'plus')}
-                    disabled={selectedUser.package === 'plus' || isUpdating}
-                  >
-                    Plus
-                  </button>
+              {isEditingUser && (
+                <div>
+                  <p className="font-semibold mb-2">Change Package:</p>
+                  <div className="flex gap-2">
+                    <button
+                      className={`btn btn-sm ${tempUserData.package === 'free' ? 'btn-ghost' : 'btn-outline'}`}
+                      onClick={() => handlePackageChange('free')}
+                      disabled={isSaving}
+                    >
+                      Free
+                    </button>
+                    <button
+                      className={`btn btn-sm ${tempUserData.package === 'basic' ? 'btn-info' : 'btn-outline'}`}
+                      onClick={() => handlePackageChange('basic')}
+                      disabled={isSaving}
+                    >
+                      Basic
+                    </button>
+                    <button
+                      className={`btn btn-sm ${tempUserData.package === 'plus' ? 'btn-success' : 'btn-outline'}`}
+                      onClick={() => handlePackageChange('plus')}
+                      disabled={isSaving}
+                    >
+                      Plus
+                    </button>
+                  </div>
+                  {tempUserData.package !== selectedUser.package && (
+                    <div className="alert alert-warning mt-2 text-sm">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <span>Package will change from {selectedUser.package.toUpperCase()} to {tempUserData.package.toUpperCase()}</span>
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
 
               <div className="divider"></div>
 
@@ -324,13 +483,47 @@ const AdminHomeTab = () => {
             </div>
 
             <div className="modal-action">
-              <button className="btn" onClick={() => setSelectedUser(null)}>
-                Close
-              </button>
+              {isEditingUser ? (
+                <>
+                  <button 
+                    className="btn btn-success"
+                    onClick={handleSaveUserChanges}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? (
+                      <>
+                        <span className="loading loading-spinner loading-sm"></span>
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Changes'
+                    )}
+                  </button>
+                  <button 
+                    className="btn btn-ghost"
+                    onClick={handleCancelEdit}
+                    disabled={isSaving}
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <button className="btn" onClick={() => {
+                  setSelectedUser(null);
+                  setIsEditingUser(false);
+                  setTempUserData(null);
+                }}>
+                  Close
+                </button>
+              )}
             </div>
           </div>
           <form method="dialog" className="modal-backdrop">
-            <button onClick={() => setSelectedUser(null)}>close</button>
+            <button onClick={() => {
+              setSelectedUser(null);
+              setIsEditingUser(false);
+              setTempUserData(null);
+            }}>close</button>
           </form>
         </dialog>
       )}

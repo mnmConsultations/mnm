@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { apiInstance as axios } from '../../../lib/utils/axios';
+import { useToast } from '../../Toast';
+import { useConfirmDialog } from '../../ConfirmDialog';
 import dynamic from 'next/dynamic';
 
 // Dynamically import RichTextEditor to avoid SSR issues
@@ -11,6 +13,8 @@ const RichTextEditor = dynamic(() => import('../../RichTextEditor'), {
 });
 
 const AdminContentTab = () => {
+  const toast = useToast();
+  const { confirm } = useConfirmDialog();
   const [categories, setCategories] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -20,6 +24,12 @@ const AdminContentTab = () => {
   const [editingTask, setEditingTask] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Order editing states
+  const [isEditingCategoryOrder, setIsEditingCategoryOrder] = useState(false);
+  const [isEditingTaskOrder, setIsEditingTaskOrder] = useState(false);
+  const [tempCategories, setTempCategories] = useState([]);
+  const [tempTasks, setTempTasks] = useState([]);
 
   useEffect(() => {
     fetchCategories();
@@ -35,7 +45,7 @@ const AdminContentTab = () => {
       }
     } catch (error) {
       console.error('Error fetching categories:', error);
-      alert('Failed to fetch categories');
+      toast.error('Failed to fetch categories');
     } finally {
       setIsLoading(false);
     }
@@ -52,13 +62,13 @@ const AdminContentTab = () => {
       }
     } catch (error) {
       console.error('Error fetching tasks:', error);
-      alert('Failed to fetch tasks');
+      toast.error('Failed to fetch tasks');
     }
   };
 
   const handleCreateCategory = () => {
     if (categories.length >= 6) {
-      alert('Maximum of 6 categories allowed');
+      toast.warning('Maximum of 6 categories allowed');
       return;
     }
     setEditingCategory({
@@ -87,7 +97,7 @@ const AdminContentTab = () => {
           editingCategory
         );
         if (response.data.success) {
-          alert('Category updated successfully');
+          toast.success('Category updated successfully');
           fetchCategories();
           fetchTasks(); // Refresh tasks as category ID might have changed
         }
@@ -95,7 +105,7 @@ const AdminContentTab = () => {
         // Create new category
         const response = await axios.post('/api/admin/categories', editingCategory);
         if (response.data.success) {
-          alert('Category created successfully');
+          toast.success('Category created successfully');
           fetchCategories();
         }
       }
@@ -104,26 +114,85 @@ const AdminContentTab = () => {
       setEditingCategory(null);
     } catch (error) {
       console.error('Error saving category:', error);
-      alert(error.response?.data?.error || 'Failed to save category');
+      toast.error(error.response?.data?.error || 'Failed to save category');
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleDeleteCategory = async (categoryId) => {
-    if (!confirm('Are you sure you want to delete this category? All tasks in this category must be deleted first.')) {
-      return;
-    }
+    const confirmed = await confirm({
+      title: 'Delete Category',
+      message: 'Are you sure you want to delete this category? All tasks in this category must be deleted first.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      type: 'danger',
+    });
+
+    if (!confirmed) return;
 
     try {
       const response = await axios.delete(`/api/admin/categories/${categoryId}`);
       if (response.data.success) {
-        alert('Category deleted successfully');
+        toast.success('Category deleted successfully');
         fetchCategories();
       }
     } catch (error) {
       console.error('Error deleting category:', error);
-      alert(error.response?.data?.error || 'Failed to delete category');
+      toast.error(error.response?.data?.error || 'Failed to delete category');
+    }
+  };
+
+  // Category Order Management
+  const handleEditCategoryOrder = () => {
+    setIsEditingCategoryOrder(true);
+    setTempCategories([...categories]);
+  };
+
+  const handleCancelCategoryOrder = () => {
+    setIsEditingCategoryOrder(false);
+    setTempCategories([]);
+  };
+
+  const handleMoveCategoryUp = (index) => {
+    if (index > 0) {
+      const newCategories = [...tempCategories];
+      [newCategories[index], newCategories[index - 1]] = [newCategories[index - 1], newCategories[index]];
+      setTempCategories(newCategories);
+    }
+  };
+
+  const handleMoveCategoryDown = (index) => {
+    if (index < tempCategories.length - 1) {
+      const newCategories = [...tempCategories];
+      [newCategories[index], newCategories[index + 1]] = [newCategories[index + 1], newCategories[index]];
+      setTempCategories(newCategories);
+    }
+  };
+
+  const handleSaveCategoryOrder = async () => {
+    try {
+      setIsSaving(true);
+      
+      // Send batch update with new order for all categories
+      const updates = tempCategories.map((cat, index) => ({
+        id: cat.id,
+        order: index + 1
+      }));
+
+      const response = await axios.patch('/api/admin/categories/reorder', { categories: updates });
+      
+      if (response.data.success) {
+        setCategories(tempCategories);
+        setIsEditingCategoryOrder(false);
+        setTempCategories([]);
+        toast.success('Category order saved successfully');
+      }
+    } catch (error) {
+      console.error('Error saving category order:', error);
+      toast.error('Failed to save category order');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -135,22 +204,23 @@ const AdminContentTab = () => {
       );
       if (response.data.success) {
         setCategories(response.data.categories);
+        toast.success('Category order updated');
       }
     } catch (error) {
       console.error('Error updating category order:', error);
-      alert('Failed to update category order');
+      toast.error('Failed to update category order');
     }
   };
 
   const handleCreateTask = () => {
     if (!selectedCategory) {
-      alert('Please select a category first');
+      toast.warning('Please select a category first');
       return;
     }
     
     const categoryTasks = tasks.filter(t => t.category === selectedCategory);
     if (categoryTasks.length >= 12) {
-      alert('Maximum of 12 tasks per category allowed');
+      toast.warning('Maximum of 12 tasks per category allowed');
       return;
     }
     
@@ -183,14 +253,14 @@ const AdminContentTab = () => {
           editingTask
         );
         if (response.data.success) {
-          alert('Task updated successfully');
+          toast.success('Task updated successfully');
           fetchTasks();
         }
       } else {
         // Create new task
         const response = await axios.post('/api/admin/tasks', editingTask);
         if (response.data.success) {
-          alert('Task created successfully');
+          toast.success('Task created successfully');
           fetchTasks();
         }
       }
@@ -199,26 +269,89 @@ const AdminContentTab = () => {
       setEditingTask(null);
     } catch (error) {
       console.error('Error saving task:', error);
-      alert(error.response?.data?.error || 'Failed to save task');
+      toast.error(error.response?.data?.error || 'Failed to save task');
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleDeleteTask = async (taskId) => {
-    if (!confirm('Are you sure you want to delete this task?')) {
-      return;
-    }
+    const confirmed = await confirm({
+      title: 'Delete Task',
+      message: 'Are you sure you want to delete this task? This action cannot be undone.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      type: 'danger',
+    });
+
+    if (!confirmed) return;
 
     try {
       const response = await axios.delete(`/api/admin/tasks/${taskId}`);
       if (response.data.success) {
-        alert('Task deleted successfully');
+        toast.success('Task deleted successfully');
         fetchTasks();
       }
     } catch (error) {
       console.error('Error deleting task:', error);
-      alert(error.response?.data?.error || 'Failed to delete task');
+      toast.error(error.response?.data?.error || 'Failed to delete task');
+    }
+  };
+
+  // Task Order Management
+  const handleEditTaskOrder = () => {
+    setIsEditingTaskOrder(true);
+    const categoryTasks = tasks.filter(t => t.category === selectedCategory);
+    setTempTasks([...categoryTasks]);
+  };
+
+  const handleCancelTaskOrder = () => {
+    setIsEditingTaskOrder(false);
+    setTempTasks([]);
+  };
+
+  const handleMoveTaskUp = (index) => {
+    if (index > 0) {
+      const newTasks = [...tempTasks];
+      [newTasks[index], newTasks[index - 1]] = [newTasks[index - 1], newTasks[index]];
+      setTempTasks(newTasks);
+    }
+  };
+
+  const handleMoveTaskDown = (index) => {
+    if (index < tempTasks.length - 1) {
+      const newTasks = [...tempTasks];
+      [newTasks[index], newTasks[index + 1]] = [newTasks[index + 1], newTasks[index]];
+      setTempTasks(newTasks);
+    }
+  };
+
+  const handleSaveTaskOrder = async () => {
+    try {
+      setIsSaving(true);
+      
+      // Send batch update with new order for all tasks
+      const updates = tempTasks.map((task, index) => ({
+        id: task.id,
+        order: index + 1
+      }));
+
+      const response = await axios.patch('/api/admin/tasks/reorder', { 
+        tasks: updates,
+        category: selectedCategory 
+      });
+      
+      if (response.data.success) {
+        await fetchTasks(selectedCategory);
+        setIsEditingTaskOrder(false);
+        setTempTasks([]);
+        toast.success('Task order saved successfully');
+      }
+    } catch (error) {
+      console.error('Error saving task order:', error);
+      toast.error('Failed to save task order');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -230,10 +363,11 @@ const AdminContentTab = () => {
       );
       if (response.data.success) {
         fetchTasks();
+        toast.success('Task order updated');
       }
     } catch (error) {
       console.error('Error updating task order:', error);
-      alert('Failed to update task order');
+      toast.error('Failed to update task order');
     }
   };
 
@@ -270,13 +404,43 @@ const AdminContentTab = () => {
           <div className="card-body">
             <div className="flex justify-between items-center mb-4">
               <h2 className="card-title">Categories ({categories.length}/6)</h2>
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={handleCreateCategory}
-                disabled={categories.length >= 6}
-              >
-                + Add Category
-              </button>
+              <div className="flex gap-2">
+                {isEditingCategoryOrder ? (
+                  <>
+                    <button
+                      className="btn btn-success btn-sm"
+                      onClick={handleSaveCategoryOrder}
+                      disabled={isSaving}
+                    >
+                      {isSaving ? 'Saving...' : 'Save Order'}
+                    </button>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={handleCancelCategoryOrder}
+                      disabled={isSaving}
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      className="btn btn-outline btn-sm"
+                      onClick={handleEditCategoryOrder}
+                      disabled={categories.length === 0}
+                    >
+                      Edit Order
+                    </button>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={handleCreateCategory}
+                      disabled={categories.length >= 6}
+                    >
+                      + Add Category
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
 
             {isLoading ? (
@@ -297,26 +461,30 @@ const AdminContentTab = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {categoryTaskCounts.map((category) => (
+                    {(isEditingCategoryOrder ? tempCategories : categoryTaskCounts).map((category, index) => (
                       <tr key={category._id}>
                         <td>
-                          <div className="flex gap-1">
-                            <button
-                              className="btn btn-xs btn-ghost"
-                              onClick={() => handleUpdateCategoryOrder(category.id, category.order - 1)}
-                              disabled={category.order === 1}
-                            >
-                              ↑
-                            </button>
+                          {isEditingCategoryOrder ? (
+                            <div className="flex gap-1">
+                              <button
+                                className="btn btn-xs btn-ghost"
+                                onClick={() => handleMoveCategoryUp(index)}
+                                disabled={index === 0}
+                              >
+                                ↑
+                              </button>
+                              <span className="px-2">{index + 1}</span>
+                              <button
+                                className="btn btn-xs btn-ghost"
+                                onClick={() => handleMoveCategoryDown(index)}
+                                disabled={index === tempCategories.length - 1}
+                              >
+                                ↓
+                              </button>
+                            </div>
+                          ) : (
                             <span className="px-2">{category.order}</span>
-                            <button
-                              className="btn btn-xs btn-ghost"
-                              onClick={() => handleUpdateCategoryOrder(category.id, category.order + 1)}
-                              disabled={category.order === categories.length}
-                            >
-                              ↓
-                            </button>
-                          </div>
+                          )}
                         </td>
                         <td>
                           <div>
@@ -408,13 +576,43 @@ const AdminContentTab = () => {
                     </span>
                   )}
                 </h2>
-                <button
-                  className="btn btn-primary btn-sm"
-                  onClick={handleCreateTask}
-                  disabled={!selectedCategory || filteredTasks.length >= 12}
-                >
-                  + Add Task
-                </button>
+                <div className="flex gap-2">
+                  {isEditingTaskOrder ? (
+                    <>
+                      <button
+                        className="btn btn-success btn-sm"
+                        onClick={handleSaveTaskOrder}
+                        disabled={isSaving}
+                      >
+                        {isSaving ? 'Saving...' : 'Save Order'}
+                      </button>
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        onClick={handleCancelTaskOrder}
+                        disabled={isSaving}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        className="btn btn-outline btn-sm"
+                        onClick={handleEditTaskOrder}
+                        disabled={!selectedCategory || filteredTasks.length === 0}
+                      >
+                        Edit Order
+                      </button>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={handleCreateTask}
+                        disabled={!selectedCategory || filteredTasks.length >= 12}
+                      >
+                        + Add Task
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
 
               {!selectedCategory ? (
@@ -434,26 +632,30 @@ const AdminContentTab = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredTasks.map((task) => (
+                      {(isEditingTaskOrder ? tempTasks : filteredTasks).map((task, index) => (
                         <tr key={task._id}>
                           <td>
-                            <div className="flex gap-1">
-                              <button
-                                className="btn btn-xs btn-ghost"
-                                onClick={() => handleUpdateTaskOrder(task.id, task.order - 1)}
-                                disabled={task.order === 1}
-                              >
-                                ↑
-                              </button>
+                            {isEditingTaskOrder ? (
+                              <div className="flex gap-1">
+                                <button
+                                  className="btn btn-xs btn-ghost"
+                                  onClick={() => handleMoveTaskUp(index)}
+                                  disabled={index === 0}
+                                >
+                                  ↑
+                                </button>
+                                <span className="px-2">{index + 1}</span>
+                                <button
+                                  className="btn btn-xs btn-ghost"
+                                  onClick={() => handleMoveTaskDown(index)}
+                                  disabled={index === tempTasks.length - 1}
+                                >
+                                  ↓
+                                </button>
+                              </div>
+                            ) : (
                               <span className="px-2">{task.order}</span>
-                              <button
-                                className="btn btn-xs btn-ghost"
-                                onClick={() => handleUpdateTaskOrder(task.id, task.order + 1)}
-                                disabled={task.order === filteredTasks.length}
-                              >
-                                ↓
-                              </button>
-                            </div>
+                            )}
                           </td>
                           <td>
                             <div>
