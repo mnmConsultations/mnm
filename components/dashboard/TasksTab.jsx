@@ -17,6 +17,7 @@
  * @param {boolean} isLoading - Loading state
  * @param {function} onProgressUpdate - Callback to update parent cache
  * @param {function} onRefresh - Callback to refresh data
+ * @param {function} onNavigateToContact - Callback to navigate to contact tab
  * 
  * Paywall Logic:
  * - Free users see upgrade prompt
@@ -46,7 +47,7 @@
 
 import { useState } from 'react';
 
-const TasksTab = ({ user, cachedData, isLoading, onProgressUpdate, onRefresh }) => {
+const TasksTab = ({ user, cachedData, isLoading, onProgressUpdate, onRefresh, onNavigateToContact }) => {
     const categories = cachedData?.categories || [];
     const tasks = cachedData?.tasks || {};
     const userProgress = cachedData?.userProgress;
@@ -195,9 +196,15 @@ const TasksTab = ({ user, cachedData, isLoading, onProgressUpdate, onRefresh }) 
                                 </svg>
                                 View Plans & Pricing
                             </a>
-                            <a href="/contact" className="btn btn-outline btn-lg">
+                            <button 
+                                onClick={onNavigateToContact}
+                                className="btn btn-outline btn-lg"
+                            >
+                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
                                 Contact Us
-                            </a>
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useLoggedInUser, useSignOut } from '../../../lib/hooks/auth.hooks';
 import HomeTab from '../../../components/dashboard/HomeTab';
 import TasksTab from '../../../components/dashboard/TasksTab';
+import ContactTab from '../../../components/dashboard/ContactTab';
 
 /**
  * User Dashboard Page
@@ -175,12 +176,6 @@ const UserDashboard = () => {
                     <h1 className="text-xl font-bold ml-2">User Dashboard</h1>
                 </div>
                 <div className="flex-none gap-2">
-                    <a href="/" className="btn btn-ghost btn-sm hidden md:flex">
-                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                        </svg>
-                        Back to Website
-                    </a>
                     <div className="dropdown dropdown-end">
                         <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
                             <div className="w-10 rounded-full bg-primary text-primary-content flex items-center justify-center">
@@ -191,21 +186,6 @@ const UserDashboard = () => {
                             <li className="menu-title">
                                 <span>{user.firstName} {user.lastName}</span>
                             </li>
-                            <li>
-                                <a href="/">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                                    </svg>
-                                    Back to Website
-                                </a>
-                            </li>
-                            <li>
-                                <a className="justify-between">
-                                    Profile
-                                    <span className="badge">Coming Soon</span>
-                                </a>
-                            </li>
-                            <li><a>Settings</a></li>
                             <li><a onClick={handleSignOut}>Logout</a></li>
                         </ul>
                     </div>
@@ -275,6 +255,15 @@ const UserDashboard = () => {
                             </svg>
                             Tasks
                         </a>
+                        <a 
+                            className={`tab tab-lg ${activeTab === 'contact' ? 'tab-active' : ''}`}
+                            onClick={() => setActiveTab('contact')}
+                        >
+                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            Contact Support
+                        </a>
                     </div>
                     
                     {/* Refresh Button */}
@@ -319,7 +308,11 @@ const UserDashboard = () => {
                             isLoading={isLoadingData}
                             onProgressUpdate={updateProgressCache}
                             onRefresh={refreshData}
+                            onNavigateToContact={() => setActiveTab('contact')}
                         />
+                    )}
+                    {activeTab === 'contact' && (
+                        <ContactTab user={user} />
                     )}
                 </div>
             </div>
