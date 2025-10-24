@@ -1,3 +1,27 @@
+/**
+ * Footer Component
+ * 
+ * Site-wide footer with company info and contact details
+ * 
+ * Content:
+ * - M&M Consultations logo and branding
+ * - Mission statement highlighting support for Indian students in Germany
+ * - Contact information (phone numbers, email)
+ * - Copyright notice with dynamic year
+ * 
+ * Contact Details:
+ * - India: +91 9545099997
+ * - Germany: +49 176 29732633
+ * - Email: mnmconsultations+info@gmail.com
+ * 
+ * Design:
+ * - Dark blue theme matching header (bg-blue-950)
+ * - Responsive layout (desktop grid, mobile stack)
+ * - Lucide icons for contact methods
+ * - Max-width container for content alignment
+ * 
+ * Note: Social media links currently commented out
+ */
 import Link from "next/link";
 import {
   Mail,

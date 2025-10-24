@@ -1,3 +1,47 @@
+/**
+ * Dashboard Router Page
+ * /dashboard
+ * 
+ * Smart router that redirects to appropriate dashboard based on user role
+ * Acts as entry point for dashboard access
+ * 
+ * Features:
+ * - Auto-detects user role (admin/user)
+ * - Redirects to role-specific dashboard
+ * - Handles unauthenticated access
+ * - Shows loading states during auth check
+ * - Error handling with fallback UI
+ * 
+ * Redirect Logic:
+ * - No user → /auth/signin
+ * - Admin user → /dashboard/admin
+ * - Regular user → /dashboard/user
+ * 
+ * Authentication Flow:
+ * 1. useLoggedInUser hook fetches current user
+ * 2. Wait for mount (hydration protection)
+ * 3. Wait for auth query to complete
+ * 4. Check user exists
+ * 5. Redirect based on role
+ * 
+ * Hydration Protection:
+ * - isMounted state prevents SSR/client mismatch
+ * - Only routes after client-side mount complete
+ * 
+ * Loading States:
+ * 1. Pre-mount: Shows loading spinner
+ * 2. Auth check: Shows "Loading dashboard..." message
+ * 3. Routing: Shows "Redirecting to your dashboard..."
+ * 
+ * Error State:
+ * - Displays error message if auth query fails
+ * - Provides "Go to Sign In" button fallback
+ * 
+ * Usage:
+ * Users access /dashboard (generic)
+ * Automatically routed to /dashboard/admin or /dashboard/user
+ * Provides seamless UX without manual role checking
+ */
 "use client";
 
 import { useEffect, useState } from "react";

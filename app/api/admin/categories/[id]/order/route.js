@@ -1,3 +1,55 @@
+/**
+ * Single Category Order Update API Endpoint
+ * PATCH /api/admin/categories/[id]/order
+ * 
+ * Purpose:
+ * - Updates the order of a single category in the relocation journey
+ * - Automatically adjusts order of other categories to maintain sequence integrity
+ * - Used for precise category reordering in admin dashboard
+ * 
+ * Authentication:
+ * - Requires admin authentication (verifyAdminAuth)
+ * - Only admin users can modify category order
+ * 
+ * Route Parameters:
+ * - id: Category ID (from URL path)
+ * 
+ * Request Body:
+ * {
+ *   newOrder: number  // New order position (must be >= 1)
+ * }
+ * 
+ * Response:
+ * Success (200): { success: true, category: Category, categories: Category[], message?: string }
+ * Error (400): { success: false, error: 'Invalid order value' }
+ * Error (404): { success: false, error: 'Category not found' }
+ * Error (403/500): { success: false, error: error message }
+ * 
+ * Order Update Logic:
+ * Moving category UP (newOrder < oldOrder):
+ *   - Categories between newOrder and oldOrder get incremented by 1
+ *   - Makes space for the moved category at lower position
+ *   - Example: Moving category 4 to position 2 → categories 2,3 become 3,4
+ * 
+ * Moving category DOWN (newOrder > oldOrder):
+ *   - Categories between oldOrder and newOrder get decremented by 1
+ *   - Fills the gap left by the moved category
+ *   - Example: Moving category 2 to position 4 → categories 3,4 become 2,3
+ * 
+ * No change (newOrder === oldOrder):
+ *   - Returns immediately without database updates
+ * 
+ * Database Operations:
+ * 1. Find category by id
+ * 2. Update affected categories using updateMany
+ * 3. Update target category's order
+ * 4. Return all categories sorted by order
+ * 
+ * Usage:
+ * - Called from AdminContentTab.jsx for single category reordering
+ * - Alternative to batch reorder endpoint for individual moves
+ * - Maintains journey phase sequence (Before Arrival → Upon Arrival → First Weeks → Ongoing)
+ */
 import { NextResponse } from 'next/server';
 import connectDB from '../../../../../../lib/utils/db';
 import { verifyAdminAuth } from '../../../../../../lib/middleware/adminAuth';

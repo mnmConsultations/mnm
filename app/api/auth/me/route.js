@@ -2,6 +2,15 @@ import { NextResponse } from 'next/server';
 import connectDB from '../../../../lib/utils/db';
 import AuthService from '../../../../lib/services/auth.services';
 
+/**
+ * Get Current User API Endpoint
+ * GET /api/auth/me
+ * 
+ * Returns the authenticated user's profile information
+ * Requires Bearer token in Authorization header
+ * Used by frontend to verify authentication state and fetch user data
+ * Includes package subscription details for paywall logic
+ */
 export async function GET(request) {
   try {
     await connectDB();
@@ -19,7 +28,7 @@ export async function GET(request) {
       );
     }
 
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    const token = authHeader.substring(7);
     
     const user = await AuthService.getCurrentUser(token);
     

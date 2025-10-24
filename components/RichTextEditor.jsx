@@ -1,3 +1,44 @@
+/**
+ * Rich Text Editor Component
+ * 
+ * WYSIWYG editor powered by TipTap for task/category descriptions
+ * Used in admin dashboard for content management
+ * 
+ * Features:
+ * - Text formatting: Bold, italic, strikethrough
+ * - Headings: H2, H3, H4
+ * - Lists: Bullet and numbered
+ * - Links: Add/remove hyperlinks
+ * - Blockquotes and horizontal rules
+ * - Undo/redo support
+ * 
+ * TipTap Extensions:
+ * - StarterKit: Basic editing functionality
+ * - Link: Hyperlink support (no auto-open on click)
+ * - Placeholder: Shows hint text when empty
+ * 
+ * Props:
+ * @param {string} content - Initial HTML content
+ * @param {function} onChange - Callback with HTML string on content change
+ * @param {string} placeholder - Placeholder text (default: "Write your content here...")
+ * 
+ * Content Sync:
+ * - useEffect syncs external content changes to editor
+ * - Prevents infinite loops by checking if content actually changed
+ * - Preserves cursor position during updates
+ * 
+ * Styling:
+ * - DaisyUI buttons with active states
+ * - Prose typography for content rendering
+ * - Minimum 200px height for comfortable editing
+ * 
+ * Usage:
+ * <RichTextEditor 
+ *   content={description}
+ *   onChange={(html) => setDescription(html)}
+ *   placeholder="Describe the task..."
+ * />
+ */
 'use client';
 
 import { useEditor, EditorContent } from '@tiptap/react';

@@ -1,17 +1,32 @@
+/**
+ * Admin Paid Users Statistics API
+ * GET /api/admin/paid-users
+ * 
+ * Returns count of users with active paid plans
+ * 
+ * Features:
+ * - Retrieves cached count from Stats model
+ * - Auto-creates stats document if missing
+ * - Used for admin dashboard KPI display
+ * 
+ * Performance:
+ * - Single document query (O(1))
+ * - No user collection scanning
+ * - Count maintained by package update operations
+ * 
+ * Security: Admin only
+ */
 import { NextResponse } from 'next/server';
 import connectDB from '../../../../lib/utils/db';
 import { verifyAdminAuth } from '../../../../lib/middleware/adminAuth';
 import Stats from '../../../../lib/models/stats.model';
 
-// GET - Get paid user count
 export async function GET(req) {
   try {
-    // Verify admin authentication
     await verifyAdminAuth(req);
     
     await connectDB();
     
-    // Get or create stats document
     let stats = await Stats.findById('global-stats');
     if (!stats) {
       stats = await Stats.create({ _id: 'global-stats', paidUserCount: 0 });

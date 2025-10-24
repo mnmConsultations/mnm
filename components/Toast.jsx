@@ -2,8 +2,22 @@
 
 import { createContext, useContext, useState, useCallback } from 'react';
 
+/**
+ * Toast Notification System
+ * 
+ * Global context-based toast notification system for displaying
+ * temporary messages to users (success, error, warning, info)
+ * 
+ * Replaces browser's generic alert() calls with professional UI
+ * Auto-dismisses after specified duration (default 3 seconds)
+ */
+
 const ToastContext = createContext(null);
 
+/**
+ * Hook to access toast functions from any component
+ * Must be used within ToastProvider
+ */
 export const useToast = () => {
   const context = useContext(ToastContext);
   if (!context) {
@@ -12,6 +26,10 @@ export const useToast = () => {
   return context;
 };
 
+/**
+ * Toast Provider Component
+ * Wrap your app with this to enable toast notifications globally
+ */
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
@@ -58,6 +76,10 @@ export const ToastProvider = ({ children }) => {
   );
 };
 
+/**
+ * Toast Container Component
+ * Renders all active toasts in top-right corner with high z-index
+ */
 const ToastContainer = ({ toasts, onClose }) => {
   return (
     <div className="toast toast-top toast-end z-[9999]">
@@ -68,6 +90,10 @@ const ToastContainer = ({ toasts, onClose }) => {
   );
 };
 
+/**
+ * Individual Toast Component
+ * Displays a single toast message with appropriate styling and icon
+ */
 const Toast = ({ toast, onClose }) => {
   const getAlertClass = () => {
     switch (toast.type) {

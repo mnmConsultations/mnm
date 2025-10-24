@@ -1,3 +1,61 @@
+/**
+ * Sign Up Page
+ * 
+ * User registration page with comprehensive form validation
+ * Creates new user account with free plan default
+ * 
+ * Features:
+ * - Multi-field registration form
+ * - Strong password validation
+ * - Password confirmation matching
+ * - Email format validation
+ * - Real-time error feedback
+ * - Auto-redirect after successful signup
+ * 
+ * Form Fields:
+ * - First Name (required)
+ * - Last Name (optional)
+ * - Email (required, validated)
+ * - Password (required, strong validation)
+ * - Confirm Password (required, must match)
+ * 
+ * Password Requirements:
+ * - Minimum 8 characters
+ * - At least one uppercase letter
+ * - At least one lowercase letter
+ * - At least one number
+ * - At least one special character (!@#$%^&*)
+ * 
+ * Validation:
+ * - Client-side validation before API call
+ * - Real-time password match checking
+ * - Memoized confirm password match for performance
+ * - Detailed error messages for each requirement
+ * 
+ * Authentication Flow:
+ * 1. User fills form
+ * 2. Client validates all fields
+ * 3. useSignup hook sends to API
+ * 4. Server creates user with free package
+ * 5. Auto-login and token storage
+ * 6. Redirect to dashboard
+ * 
+ * Redirect Logic:
+ * - Admin users → /dashboard/admin (rare for signup)
+ * - Regular users → /dashboard/user
+ * - Already logged in → Auto-redirect (skip form)
+ * 
+ * Loading States:
+ * - Disabled inputs during submission
+ * - Loading spinner in button
+ * - "Creating account..." text feedback
+ * 
+ * Error Handling:
+ * - Field validation errors
+ * - Email already exists
+ * - Network errors
+ * - Server errors
+ */
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';

@@ -1,3 +1,51 @@
+/**
+ * Home Tab Component (User Dashboard)
+ * 
+ * Welcome screen with progress overview and notifications
+ * First view users see when accessing dashboard
+ * 
+ * Features:
+ * - Overall relocation progress display
+ * - Per-category progress breakdown (4 categories)
+ * - User package information card
+ * - Notifications center with filtering
+ * - Quick actions section
+ * 
+ * Layout:
+ * - 70/30 split on desktop (main content / sidebar)
+ * - Responsive single column on mobile
+ * 
+ * Progress Section:
+ * - Overall progress bar with percentage
+ * - 4 category progress bars:
+ *   - Before Arrival (info blue)
+ *   - Upon Arrival (success green)
+ *   - First Weeks (warning yellow)
+ *   - Ongoing (secondary purple)
+ * 
+ * Package Info Card:
+ * - Shows current plan (Free/Basic/Plus)
+ * - Displays activation and expiry dates
+ * - Color-coded badge by package type
+ * - Upgrade call-to-action for free users
+ * 
+ * Notifications Center:
+ * - All/Unread filtering tabs
+ * - Priority-based display order
+ * - Mark as read functionality
+ * - Action links for actionable notifications
+ * - Empty state for no notifications
+ * 
+ * Props:
+ * @param {object} user - Current logged-in user
+ * @param {object} cachedData - Pre-fetched progress and notifications
+ * @param {boolean} isLoading - Loading state
+ * @param {function} onRefresh - Callback to refresh data
+ * 
+ * Caching:
+ * - Uses parent's cached data (no API calls on mount)
+ * - Efficient re-renders on tab switch
+ */
 'use client';
 
 const HomeTab = ({ user, cachedData, isLoading, onRefresh }) => {

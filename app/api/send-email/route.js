@@ -1,11 +1,57 @@
+/**
+ * Send Email API (Contact Form)
+ * POST /api/send-email
+ * 
+ * Handles contact form submissions via Resend email service
+ * Sends user inquiries to M&M Consultations team
+ * 
+ * Features:
+ * - Email delivery via Resend API
+ * - Server-side validation
+ * - React email templates
+ * - Error handling and logging
+ * 
+ * Request Body:
+ * - name (required): User's full name
+ * - email (required): User's email address (validated)
+ * - phone (required): Contact phone number
+ * - subject (required): Email subject line
+ * - message (required): Message content
+ * 
+ * Validation:
+ * - All fields required
+ * - Email format validation (regex: \S+@\S+\.\S+)
+ * - Returns 400 Bad Request if validation fails
+ * 
+ * Resend Configuration:
+ * - API Key: process.env.RESEND_API_KEY (server-side only)
+ * - From: onboarding@resend.dev (verified Resend sender)
+ * - To: mnmconsultations@gmail.com
+ * - Subject: "Enquiry from [name]: [subject]"
+ * 
+ * Email Template:
+ * - Uses React component EmailTemplate
+ * - Renders user-provided content
+ * 
+ * Error Handling:
+ * - Logs detailed errors server-side
+ * - Returns generic error messages to client (security)
+ * - 500 Internal Server Error on failures
+ * 
+ * Security Notes:
+ * - API key stored in environment variable (not NEXT_PUBLIC_)
+ * - User email not used directly in 'from' field (prevents spoofing)
+ * - Input validation prevents injection attacks
+ * 
+ * Usage:
+ * Contact form on /contact page sends POST request
+ * Returns { success: true, message: 'Email sent successfully!' }
+ */
 // filepath: d:\Project\mnm2\app\api\send-email\route.js
 import { Resend } from 'resend';
 import { NextResponse } from 'next/server';
-import { EmailTemplate} from '../../../components/email-template.jsx'; // Adjust the import path as necessary
+import { EmailTemplate} from '../../../components/email-template.jsx';
 
-// Ensure your API key is stored securely in environment variables
-// Use a variable name accessible on the server (e.g., RESEND_API_KEY)
-// DO NOT prefix with NEXT_PUBLIC_
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request) {

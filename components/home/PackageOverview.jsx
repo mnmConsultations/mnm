@@ -1,9 +1,51 @@
+/**
+ * PackageOverview Component
+ * Landing page package comparison section
+ * 
+ * Features:
+ * - 2 package tiers (Essential & Premium)
+ * - Mobile carousel with tabs
+ * - Desktop side-by-side comparison
+ * - IntersectionObserver for scroll tracking
+ * - Smooth scrolling and animations
+ * - "Recommended" badge on Essential package
+ * 
+ * Packages:
+ * 1. Essential (₹25,000) - Core services, recommended
+ * 2. Premium (₹40,000) - Comprehensive support
+ * 
+ * Mobile Behavior:
+ * - Horizontal scrollable carousel
+ * - Tab indicators for package selection
+ * - Snap scrolling to center packages
+ * - IntersectionObserver updates active tab
+ * 
+ * Desktop Behavior:
+ * - Side-by-side grid layout
+ * - No carousel, both packages visible
+ * 
+ * State Management:
+ * - activeIndex: Current package in view (mobile)
+ * - carouselRef: Carousel container reference
+ * - itemRefs: Array of package card references
+ * - isScrollingProgrammatically: Prevents observer conflicts
+ * - observerRef: IntersectionObserver instance
+ * 
+ * IntersectionObserver:
+ * - Tracks which package card is 75%+ visible
+ * - Updates activeIndex on user swipe
+ * - Disabled during programmatic scrolling
+ */
 "use client"
 
-import React, { useState, useRef, useEffect, useCallback } from "react"; // Import hooks
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Check } from "lucide-react";
 
+/**
+ * Packages Array
+ * 2 pricing tiers with features and links
+ */
 const packages = [
   {
     id: 'essential',
@@ -40,11 +82,27 @@ const packages = [
   }
 ];
 
-// Find the index of the recommended package for default selection
+/**
+ * Find recommended package index for default carousel position
+ */
 const recommendedIndex = packages.findIndex((pkg) => pkg.recommended) ?? 0;
 
+/**
+ * PackagesOverview Component
+ * Renders package comparison with mobile carousel
+ * 
+ * Refs:
+ * - carouselRef: Carousel container element
+ * - itemRefs: Array of package card elements
+ * - isScrollingProgrammatically: Flag to prevent observer conflicts
+ * - observerRef: IntersectionObserver instance
+ * 
+ * Effects:
+ * 1. IntersectionObserver setup for scroll tracking
+ * 2. Item refs cleanup on unmount
+ */
 const PackagesOverview = () => {
-  // State to track the active package index
+  // State to track the active package index (mobile carousel)
   const [activeIndex, setActiveIndex] = useState(recommendedIndex);
   // Ref for the carousel container
   const carouselRef = useRef(null);
@@ -55,7 +113,21 @@ const PackagesOverview = () => {
   // Ref for the observer instance
   const observerRef = useRef(null);
 
-  // Function to handle tab changes
+  /**
+   * handleTabChange
+   * Programmatically scrolls carousel to selected package
+   * 
+   * Parameters:
+   * - index: Package index to scroll to
+   * 
+   * Logic:
+   * 1. Ignore if already on selected index
+   * 2. Update activeIndex state
+   * 3. Calculate scroll position from offsetLeft
+   * 4. Smooth scroll to target position
+   * 5. Set flag to prevent IntersectionObserver conflicts
+   * 6. Clear flag after 600ms (animation duration)
+   */
   const handleTabChange = (index) => {
     if (index === activeIndex) return; // Avoid unnecessary updates
 
@@ -73,7 +145,17 @@ const PackagesOverview = () => {
     }
   };
 
-  // Callback for Intersection Observer
+  /**
+   * handleIntersection
+   * IntersectionObserver callback for scroll tracking
+   * 
+   * Logic:
+   * - Ignore intersections during programmatic scrolling
+   * - Find the ref index that matches the intersecting element
+   * - Update activeIndex if different package is 75%+ visible
+   * 
+   * Threshold: 0.75 (75% of card must be visible to trigger)
+   */
   const handleIntersection = useCallback(
     (entries) => {
       if (isScrollingProgrammatically.current) return; // Ignore observer if scrolling programmatically
@@ -94,7 +176,23 @@ const PackagesOverview = () => {
     [activeIndex],
   ); // Recreate callback if activeIndex changes
 
-  // Effect to set up Intersection Observer
+  /**
+   * Effect: IntersectionObserver Setup
+   * Initializes scroll position tracking for mobile carousel
+   * 
+   * Configuration:
+   * - root: carouselRef (scrollable container)
+   * - threshold: 0.75 (75% visibility required)
+   * - rootMargin: 0px (no margin around root)
+   * 
+   * Initial Scroll:
+   * - Auto-scrolls to recommended package on mount
+   * - Uses instant scroll (behavior: "auto")
+   * 
+   * Cleanup:
+   * - Disconnects observer on unmount
+   * - Prevents memory leaks
+   */
   useEffect(() => {
     // Ensure refs are populated before setting up observer
     const currentItemRefs = itemRefs.current.filter(Boolean); // Filter out any null refs initially
@@ -134,7 +232,11 @@ const PackagesOverview = () => {
     };
   }, [handleIntersection, activeIndex]); // Rerun effect if handler or activeIndex changes (for initial scroll)
 
-  // Effect to clear item refs array on unmount or package change (if packages were dynamic)
+  /**
+   * Effect: Refs Array Cleanup
+   * Ensures itemRefs array matches current package count
+   * Prevents memory leaks from removed packages
+   */
   useEffect(() => {
     itemRefs.current = itemRefs.current.slice(0, packages.length);
     return () => {
@@ -145,6 +247,7 @@ const PackagesOverview = () => {
   return (
     <section className=" bg-gray-50 py-16 px-4 md:py-24 md:px-8 lg:px-16">
       <div className=" max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
             Service Packages

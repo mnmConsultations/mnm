@@ -1,10 +1,29 @@
+/**
+ * Admin Single Task Management API
+ * /api/admin/tasks/[id]
+ * 
+ * Admin-only CRUD operations for individual tasks
+ * 
+ * Features:
+ * - Retrieve task by ID
+ * - Update task with validation
+ * - Delete task with category minimum enforcement
+ * - Special handling: ID regeneration when title changes
+ * 
+ * Security: Requires admin authentication
+ */
 import { NextResponse } from 'next/server';
 import connectDB from '../../../../../lib/utils/db';
 import { verifyAdminAuth } from '../../../../../lib/middleware/adminAuth';
 import Task from '../../../../../lib/models/task.model';
 import Category from '../../../../../lib/models/category.model';
 
-// GET - Get single task
+/**
+ * Get Single Task
+ * GET /api/admin/tasks/[id]
+ * 
+ * Returns task details by ID
+ */
 export async function GET(req, { params }) {
   try {
     // Verify admin authentication
@@ -35,10 +54,29 @@ export async function GET(req, { params }) {
   }
 }
 
-// PATCH - Update task
+/**
+ * Update Task
+ * PATCH /api/admin/tasks/[id]
+ * 
+ * Updates task with partial fields
+ * 
+ * Special Behavior - ID Regeneration:
+ * When title changes:
+ * 1. Generate new kebab-case ID from title
+ * 2. Delete old task record
+ * 3. Create new task with new ID
+ * 4. Return { idChanged: true, oldId, newId }
+ * 
+ * This ensures IDs always match titles for consistency
+ * Frontend must handle ID changes in URLs and references
+ * 
+ * Validation:
+ * - Title: Max 50 chars
+ * - Description: Max 800 chars
+ * - Category change: Verify exists and under 12 task limit
+ */
 export async function PATCH(req, { params }) {
   try {
-    // Verify admin authentication
     await verifyAdminAuth(req);
     
     await connectDB();
@@ -57,7 +95,6 @@ export async function PATCH(req, { params }) {
       requirements,
     } = body;
     
-    // Find existing task
     const task = await Task.findOne({ id: taskId });
     if (!task) {
       return NextResponse.json(
@@ -66,7 +103,6 @@ export async function PATCH(req, { params }) {
       );
     }
     
-    // Validate title if provided
     if (title !== undefined) {
       if (!title || title.length > 50) {
         return NextResponse.json(
@@ -75,7 +111,6 @@ export async function PATCH(req, { params }) {
         );
       }
       
-      // Generate new ID from title
       const baseId = title
         .toLowerCase()
         .trim()
@@ -83,7 +118,6 @@ export async function PATCH(req, { params }) {
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-');
       
-      // Ensure unique ID
       let newId = baseId;
       let counter = 1;
       while (newId !== taskId && await Task.findOne({ id: newId })) {
@@ -91,7 +125,6 @@ export async function PATCH(req, { params }) {
         counter++;
       }
       
-      // If ID changed, delete old and create new
       if (newId !== taskId) {
         await Task.deleteOne({ id: taskId });
         
@@ -120,7 +153,6 @@ export async function PATCH(req, { params }) {
       }
     }
     
-    // Validate description if provided
     if (description !== undefined) {
       if (description.length > 800) {
         return NextResponse.json(
@@ -130,7 +162,6 @@ export async function PATCH(req, { params }) {
       }
     }
     
-    // Validate category if being changed
     if (category !== undefined && category !== task.category) {
       const categoryExists = await Category.findOne({ id: category });
       if (!categoryExists) {
@@ -140,7 +171,6 @@ export async function PATCH(req, { params }) {
         );
       }
       
-      // Check task count in new category
       const taskCount = await Task.countDocuments({ category });
       if (taskCount >= 12) {
         return NextResponse.json(
@@ -150,7 +180,6 @@ export async function PATCH(req, { params }) {
       }
     }
     
-    // Regular update without ID change
     const updateData = {};
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
@@ -181,17 +210,25 @@ export async function PATCH(req, { params }) {
   }
 }
 
-// DELETE - Delete task
+/**
+ * Delete Task
+ * DELETE /api/admin/tasks/[id]
+ * 
+ * Removes task from database
+ * 
+ * Business Rule: Minimum 1 Task Per Category
+ * - Prevents deletion if task is the last in its category
+ * - Ensures each category always has at least one task
+ * - Maintains data integrity for user dashboards
+ */
 export async function DELETE(req, { params }) {
   try {
-    // Verify admin authentication
     await verifyAdminAuth(req);
     
     await connectDB();
     
     const taskId = params.id;
     
-    // Find the task
     const task = await Task.findOne({ id: taskId });
     if (!task) {
       return NextResponse.json(
@@ -200,7 +237,6 @@ export async function DELETE(req, { params }) {
       );
     }
     
-    // Check minimum task count per category
     const taskCount = await Task.countDocuments({ category: task.category });
     if (taskCount <= 1) {
       return NextResponse.json(
@@ -209,7 +245,6 @@ export async function DELETE(req, { params }) {
       );
     }
     
-    // Delete task
     await Task.deleteOne({ id: taskId });
     
     return NextResponse.json({

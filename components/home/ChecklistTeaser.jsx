@@ -1,3 +1,37 @@
+/**
+ * ChecklistTeaser Component
+ * Landing page section promoting interactive moving checklist
+ * 
+ * Features:
+ * - Promotional section for checklist feature (coming soon)
+ * - Two-column layout: Description + Preview
+ * - Sample checklist items with checkboxes
+ * - Gradient background (primary to blue-950)
+ * - White text on dark background
+ * 
+ * Layout:
+ * - Left Column: Feature description with benefits
+ * - Right Column: Preview of checklist UI
+ * 
+ * Benefits Highlighted:
+ * - Personalized task list
+ * - Progress tracking with visual indicators
+ * - Detailed task information
+ * - Service connection integration
+ * 
+ * Checklist Preview:
+ * - Before Arrival: Visa, accommodation, flights, insurance
+ * - Upon Arrival: Anmeldung, bank account, SIM, transportation
+ * - Some items pre-checked to show completion
+ * 
+ * CTA:
+ * - "Coming Soon..." button (feature not yet available)
+ * - Placeholder for future /checklist link
+ * 
+ * Icons:
+ * - ClipboardCheck: Main feature icon
+ * - ArrowRight: Benefit list bullets
+ */
 import Link from "next/link";
 import { ClipboardCheck, ArrowRight } from "lucide-react";
 
@@ -5,11 +39,15 @@ const ChecklistTeaser = () => {
   return (
     <section className="bg-gradient-to-r from-primary to-blue-950 text-white py-16 px-4 md:py-24 md:px-8 lg:px-16">
       <div className=" max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Two-Column Grid - Description + Preview */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          {/* Left Column - Feature Description */}
           <div>
+            {/* Feature Icon */}
             <div className="mb-6 inline-block p-3 bg-white/20 rounded-full">
               <ClipboardCheck className="h-12 w-12" />
             </div>
+            {/* Feature Title and Description */}
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Interactive Moving Checklist
             </h2>
@@ -18,6 +56,7 @@ const ChecklistTeaser = () => {
               your progress, get timely reminders, and ensure nothing is
               forgotten during your move to Germany.
             </p>
+            {/* Benefits List with icons */}
             <div className="space-y-4">
               <div className="flex items-start">
                 <div className="bg-white/20 p-1 rounded-full mr-3 flex-shrink-0 mt-1">
@@ -44,6 +83,7 @@ const ChecklistTeaser = () => {
                 <p>Connect tasks with our relevant services</p>
               </div>
             </div>
+            {/* CTA Button - Coming Soon */}
             <div className="mt-8">
               <button className="btn text-black">
                 Comming Soon...
@@ -52,10 +92,13 @@ const ChecklistTeaser = () => {
             </div>
           </div>
 
+          {/* Right Column - Checklist Preview */}
           <div className="bg-white/10 p-6 rounded-lg backdrop-blur-sm">
+            {/* Before Arrival Section */}
             <div className="bg-white/10 rounded-lg p-4 mb-4">
               <h3 className="font-semibold text-xl mb-2">Before Arrival</h3>
               <div className="space-y-3">
+                {/* Sample tasks with checkboxes - First two checked */}
                 <div className="flex items-center">
                   <input
                     type="checkbox"
@@ -89,9 +132,11 @@ const ChecklistTeaser = () => {
               </div>
             </div>
 
+            {/* Upon Arrival Section */}
             <div className="bg-white/10 rounded-lg p-4">
               <h3 className="font-semibold text-xl mb-2">Upon Arrival</h3>
               <div className="space-y-3">
+                {/* Sample tasks - All unchecked */}
                 <div className="flex items-center">
                   <input
                     type="checkbox"
@@ -123,6 +168,7 @@ const ChecklistTeaser = () => {
               </div>
             </div>
 
+            {/* Footer Note */}
             <div className="mt-4 text-center text-sm text-blue-100">
               <span>Complete checklist available in the interactive tool</span>
             </div>

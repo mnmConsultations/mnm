@@ -3,9 +3,18 @@ import dbConnect from '@/lib/utils/db';
 import Category from '@/lib/models/category.model';
 import { verifyAdminAuth } from '@/lib/middleware/adminAuth';
 
+/**
+ * Batch Category Reorder API Endpoint
+ * PATCH /api/admin/categories/reorder
+ * 
+ * Updates the display order of multiple categories in a single database operation
+ * Reduces database requests when admin reorders categories in the dashboard
+ * Uses MongoDB bulkWrite for optimal performance
+ * 
+ * Request body: { categories: [{id, order}, {id, order}, ...] }
+ */
 export async function PATCH(req) {
   try {
-    // Verify admin authentication
     await verifyAdminAuth(req);
 
     await dbConnect();
@@ -19,7 +28,6 @@ export async function PATCH(req) {
       );
     }
 
-    // Batch update all categories in a single operation
     const bulkOps = categories.map(cat => ({
       updateOne: {
         filter: { id: cat.id },

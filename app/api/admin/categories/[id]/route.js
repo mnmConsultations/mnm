@@ -1,10 +1,29 @@
+/**
+ * Admin Single Category Management API
+ * /api/admin/categories/[id]
+ * 
+ * Admin-only CRUD operations for individual categories
+ * 
+ * Features:
+ * - Retrieve category by ID
+ * - Update category with validation
+ * - Delete category (only if no tasks)
+ * - Cascading updates: When category ID changes, all related tasks are updated
+ * 
+ * Security: Requires admin authentication
+ */
 import { NextResponse } from 'next/server';
 import connectDB from '../../../../../lib/utils/db';
 import { verifyAdminAuth } from '../../../../../lib/middleware/adminAuth';
 import Category from '../../../../../lib/models/category.model';
 import Task from '../../../../../lib/models/task.model';
 
-// GET - Get single category
+/**
+ * Get Single Category
+ * GET /api/admin/categories/[id]
+ * 
+ * Returns category details by ID
+ */
 export async function GET(req, { params }) {
   try {
     // Verify admin authentication
@@ -35,10 +54,29 @@ export async function GET(req, { params }) {
   }
 }
 
-// PATCH - Update category
+/**
+ * Update Category
+ * PATCH /api/admin/categories/[id]
+ * 
+ * Updates category with partial fields
+ * 
+ * Special Behavior - Cascading ID Update:
+ * When display name changes:
+ * 1. Generate new camelCase ID
+ * 2. Update all related tasks with new category ID
+ * 3. Delete old category record
+ * 4. Create new category with new ID
+ * 5. Return { idChanged: true, oldId, newId }
+ * 
+ * This maintains referential integrity across all tasks
+ * Frontend must handle ID changes in navigation and state
+ * 
+ * Validation:
+ * - Display name: Max 50 chars
+ * - Uniqueness: New name must not conflict with existing
+ */
 export async function PATCH(req, { params }) {
   try {
-    // Verify admin authentication
     await verifyAdminAuth(req);
     
     await connectDB();
@@ -47,7 +85,6 @@ export async function PATCH(req, { params }) {
     const body = await req.json();
     const { displayName, description, icon, color, order, estimatedTimeFrame } = body;
     
-    // Find existing category
     const category = await Category.findOne({ id: categoryId });
     if (!category) {
       return NextResponse.json(
@@ -56,7 +93,6 @@ export async function PATCH(req, { params }) {
       );
     }
     
-    // Validate displayName if provided
     if (displayName !== undefined) {
       if (!displayName || displayName.length > 50) {
         return NextResponse.json(
@@ -65,14 +101,12 @@ export async function PATCH(req, { params }) {
         );
       }
       
-      // Generate new ID from displayName
       const newId = displayName
         .trim()
         .replace(/\s+(.)/g, (match, char) => char.toUpperCase())
         .replace(/\s+/g, '')
         .replace(/^(.)/, (match, char) => char.toLowerCase());
       
-      // Check if new ID conflicts with existing category (other than current)
       if (newId !== categoryId) {
         const existingCategory = await Category.findOne({ id: newId });
         if (existingCategory) {
@@ -82,13 +116,11 @@ export async function PATCH(req, { params }) {
           );
         }
         
-        // Update tasks with new category ID
         await Task.updateMany(
           { category: categoryId },
           { category: newId }
         );
         
-        // Delete old category and create new one with updated ID
         await Category.deleteOne({ id: categoryId });
         
         const updatedCategory = await Category.create({
@@ -112,7 +144,6 @@ export async function PATCH(req, { params }) {
       }
     }
     
-    // Regular update without ID change
     const updateData = {};
     if (displayName !== undefined) updateData.displayName = displayName;
     if (description !== undefined) updateData.description = description;
@@ -140,17 +171,30 @@ export async function PATCH(req, { params }) {
   }
 }
 
-// DELETE - Delete category (only if it has no tasks)
+/**
+ * Delete Category
+ * DELETE /api/admin/categories/[id]
+ * 
+ * Removes category from database
+ * 
+ * Business Rules:
+ * 1. Minimum 1 category required - prevents deletion of last category
+ * 2. No orphan tasks - prevents deletion if category has tasks
+ * 
+ * Error Messages:
+ * - Shows task count if tasks exist
+ * - Instructs admin to delete tasks first
+ * 
+ * This maintains data integrity and prevents broken task relationships
+ */
 export async function DELETE(req, { params }) {
   try {
-    // Verify admin authentication
     await verifyAdminAuth(req);
     
     await connectDB();
     
     const categoryId = params.id;
     
-    // Check if category exists
     const category = await Category.findOne({ id: categoryId });
     if (!category) {
       return NextResponse.json(
@@ -159,7 +203,6 @@ export async function DELETE(req, { params }) {
       );
     }
     
-    // Check minimum category count
     const categoryCount = await Category.countDocuments();
     if (categoryCount <= 1) {
       return NextResponse.json(
@@ -168,7 +211,6 @@ export async function DELETE(req, { params }) {
       );
     }
     
-    // Check if category has tasks
     const taskCount = await Task.countDocuments({ category: categoryId });
     if (taskCount > 0) {
       return NextResponse.json(
@@ -177,7 +219,6 @@ export async function DELETE(req, { params }) {
       );
     }
     
-    // Delete category
     await Category.deleteOne({ id: categoryId });
     
     return NextResponse.json({

@@ -1,3 +1,47 @@
+/**
+ * Tasks Tab Component
+ * 
+ * User-facing task checklist with category navigation
+ * Displays relocation tasks organized by journey phase
+ * 
+ * Features:
+ * - Category-based task organization
+ * - Task completion tracking with checkboxes
+ * - Expandable task details (tips, requirements, links)
+ * - Progress calculation per category
+ * - Paywall protection for free users
+ * 
+ * Props:
+ * @param {object} user - Current logged-in user
+ * @param {object} cachedData - Pre-fetched tasks, categories, progress
+ * @param {boolean} isLoading - Loading state
+ * @param {function} onProgressUpdate - Callback to update parent cache
+ * @param {function} onRefresh - Callback to refresh data
+ * 
+ * Paywall Logic:
+ * - Free users see upgrade prompt
+ * - Shows Basic and Plus plan comparison
+ * - Links to packages page
+ * 
+ * Task Interaction:
+ * - Click checkbox to mark complete/incomplete
+ * - Updates UserProgress via PUT /api/dashboard/progress
+ * - Optimistic UI update through onProgressUpdate callback
+ * 
+ * Task Expansion:
+ * - Click task card to expand/collapse
+ * - Shows full description, tips, requirements, external links
+ * - Difficulty and duration badges
+ * 
+ * Progress Display:
+ * - Per-category progress bars
+ * - Visual feedback for completion status
+ * 
+ * Caching Pattern:
+ * - Uses parent's cached data
+ * - Updates cache via callback (no local API calls on mount)
+ * - Preserves state during tab switches
+ */
 'use client';
 
 import { useState } from 'react';

@@ -1,3 +1,42 @@
+/**
+ * FAQ Page
+ * /faq
+ * 
+ * Frequently Asked Questions page for M&M Consultations
+ * Answers common questions about studying in Germany
+ * 
+ * Features:
+ * - 15 FAQ items with DaisyUI collapse accordion
+ * - Topics covered: Services, packages, financial, cultural events
+ * - Banking and insurance guidance
+ * - Additional topics teaser section
+ * - Contact CTA for unanswered questions
+ * - Auth-based redirect for logged-in users
+ * 
+ * FAQ Categories:
+ * 1. Company Overview - What is M&M, mission, services
+ * 2. Service Packages - Essential package details, pricing
+ * 3. Specific Services - Airport pickup, cultural events, support groups
+ * 4. Customization - Package add-ons and personalization
+ * 5. Networking - Professional connections and events
+ * 6. Financial - Blocked accounts, bank accounts, insurance
+ * 7. Getting Started - Contact info and onboarding process
+ * 
+ * UI Components:
+ * - Accordion-style FAQ with collapse component
+ * - HelpCircle icon in hero section
+ * - More topics grid with bullet points
+ * - Dual CTA buttons (Contact / Packages)
+ * 
+ * Auth Logic:
+ * - Redirects logged-in users to dashboard
+ * - Admin → /dashboard/admin
+ * - User → /dashboard/user
+ * - Loading state during auth check
+ * 
+ * Hydration Protection:
+ * - isMounted prevents SSR mismatch
+ */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,6 +45,11 @@ import { useLoggedInUser } from "@/lib/hooks/auth.hooks";
 import Link from "next/link";
 import { HelpCircle } from "lucide-react";
 
+/**
+ * FAQ Data
+ * 15 frequently asked questions with detailed answers
+ * Covers services, pricing, financial requirements, and processes
+ */
 const faqs = [
     {
       id: "1",
@@ -84,28 +128,51 @@ const faqs = [
     }
   ];
   
-  const moreTopics = [
-    "German Bank Accounts",
-    "Health Insurance",
-    "University Enrollment",
-    "Public Transportation",
-    "City Registration (Anmeldung)",
-    "Cultural Integration",
-    "Student Discounts",
-    "Working in Germany",
-    "Finding Accommodation",
-    "German Language Skills"
-  ];
+/**
+ * Additional Topics List
+ * Topics covered in full FAQ but not shown on this page
+ * Used to tease comprehensive knowledge base
+ */
+const moreTopics = [
+  "German Bank Accounts",
+  "Health Insurance",
+  "University Enrollment",
+  "Public Transportation",
+  "City Registration (Anmeldung)",
+  "Cultural Integration",
+  "Student Discounts",
+  "Working in Germany",
+  "Finding Accommodation",
+  "German Language Skills"
+];
 
+/**
+ * FAQ Component
+ * Main page component for frequently asked questions
+ * 
+ * State:
+ * - isMounted: Hydration protection flag
+ * 
+ * Auth Flow:
+ * 1. Check authentication status
+ * 2. Redirect if logged in
+ * 3. Show loading during check
+ * 4. Render content if not logged in
+ */
 const Faq = () => {
   const router = useRouter();
   const { data: user, isLoading } = useLoggedInUser();
   const [isMounted, setIsMounted] = useState(false);
 
+  // Hydration protection
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
+  /**
+   * Auth-based Redirect Effect
+   * Redirects authenticated users to role-specific dashboard
+   */
   useEffect(() => {
     // Redirect logged-in users to their dashboard
     if (isMounted && !isLoading && user) {
@@ -117,7 +184,10 @@ const Faq = () => {
     }
   }, [user, isLoading, isMounted, router]);
 
-  // Show loading state while checking authentication
+  /**
+   * Loading State
+   * Shown during component mount and auth check
+   */
   if (!isMounted || isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -129,15 +199,20 @@ const Faq = () => {
     );
   }
 
-  // Don't render content if user is logged in (will redirect)
+  /**
+   * Auth Redirect State
+   * Returns null while redirecting logged-in users
+   */
   if (user) {
     return null;
   }
 
     return (
         <div>
+            {/* Main FAQ Container */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
         <div className="max-w-3xl mx-auto">
+          {/* Hero Section - Title and description */}
           <div className="text-center mb-12">
             <h1 className="text-3xl md:text-4xl font-bold mb-4 text-[#0c1425]">Frequently Asked Questions</h1>
             <p className="text-gray-600 text-lg">
@@ -145,12 +220,14 @@ const Faq = () => {
             </p>
           </div>
 
+          {/* Icon - HelpCircle for visual appeal */}
           <div className="mb-10 flex justify-center">
             <div className="bg-[#e5eeff] p-4 rounded-full">
               <HelpCircle size={32} className="text-[#4e6690]" />
             </div>
           </div>
 
+          {/* FAQ Accordion - DaisyUI collapse component */}
           <div className="w-full mb-12 flex flex-col gap-2">
             {faqs.map((faq) => (
                 <div key={faq.id} className="collapse collapse-plus bg-base-100 border border-base-300">
@@ -161,11 +238,13 @@ const Faq = () => {
             ))}
           </div>
 
+          {/* Additional Topics Section - Teaser for more content */}
           <div className="bg-blue-50 p-6 rounded-lg mb-12">
             <h2 className="text-xl font-bold mb-4">Looking for More Information?</h2>
             <p className="text-gray-700 mb-4">
               We have answers to more than 50 questions about studying in Germany. Our comprehensive FAQ covers topics like:
             </p>
+            {/* Topics Grid - 2 columns on desktop */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
               {moreTopics.map((topic, index) => (
                 <div key={index} className="flex items-center">
@@ -179,11 +258,13 @@ const Faq = () => {
             </p>
           </div>
 
+          {/* CTA Section - Contact for more help */}
           <div className="mt-16 text-center">
             <h3 className="text-2xl font-bold mb-4 text-[#0c1425]">Still have questions?</h3>
             <p className="text-gray-600 mb-6">
               Contact our team for personalized assistance with your study abroad journey.
             </p>
+            {/* Dual CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button className="btn btn-primary text-neutral-content">
                 <Link href="/contact">Contact Us</Link>

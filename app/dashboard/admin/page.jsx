@@ -1,3 +1,53 @@
+/**
+ * Admin Dashboard Page
+ * /dashboard/admin
+ * 
+ * Admin-only dashboard for content and user management
+ * Protected route requiring admin role authentication
+ * 
+ * Features:
+ * - Tab-based interface (Home/Content)
+ * - User management (Home tab)
+ * - Task & Category management (Content tab)
+ * - Logout functionality
+ * - Link back to main website
+ * 
+ * Tabs:
+ * 1. Home Tab (AdminHomeTab):
+ *    - User search and package management
+ *    - Paid user count display
+ *    - User package editing with confirmation
+ * 
+ * 2. Content Tab (AdminContentTab):
+ *    - Category management (CRUD, reordering)
+ *    - Task management (CRUD, reordering)
+ *    - Batch operations support
+ * 
+ * Authentication & Authorization:
+ * - useLoggedInUser hook fetches current user
+ * - Redirects to /auth/signin if not logged in
+ * - Redirects to /dashboard/user if non-admin
+ * - Only renders for admin role users
+ * 
+ * Hydration Protection:
+ * - isMounted state prevents SSR/client mismatch
+ * - Loading spinner during auth check
+ * 
+ * Navigation:
+ * - Logo links to homepage
+ * - "Back to Website" button in navbar
+ * - User avatar dropdown with logout
+ * - Admin badge (error color) on avatar
+ * 
+ * State Management:
+ * - activeTab: Controls which tab content displays
+ * - DaisyUI tabs for UI
+ * 
+ * Security:
+ * - Server-side auth also required (middleware)
+ * - Client-side check prevents unauthorized UI access
+ * - Role verification on every admin API call
+ */
 'use client';
 
 import { useEffect, useState } from 'react';

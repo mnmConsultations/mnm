@@ -1,10 +1,33 @@
+/**
+ * Admin User Management API
+ * /api/admin/users/[id]
+ * 
+ * Admin-only operations for managing individual users
+ * 
+ * Features:
+ * - Delete users (with active plan protection)
+ * - Update user packages (with auto-expiry calculation)
+ * - Auto-update paid user statistics
+ * 
+ * Security: Requires admin authentication
+ */
 import { NextResponse } from 'next/server';
 import connectDB from '../../../../../lib/utils/db';
 import { verifyAdminAuth } from '../../../../../lib/middleware/adminAuth';
 import User from '../../../../../lib/models/user.model';
 import Stats from '../../../../../lib/models/stats.model';
 
-// DELETE - Delete user (only if they don't have an active plan)
+/**
+ * Delete User
+ * DELETE /api/admin/users/[id]
+ * 
+ * Removes user from database
+ * 
+ * Business Rule: Active Plan Protection
+ * - Prevents deletion of users with active paid plans
+ * - Only allows deletion of free users or expired paid users
+ * - Ensures paying customers aren't accidentally removed
+ */
 export async function DELETE(req, { params }) {
   try {
     // Verify admin authentication
@@ -51,10 +74,26 @@ export async function DELETE(req, { params }) {
   }
 }
 
-// PATCH - Update user package
+/**
+ * Update User Package
+ * PATCH /api/admin/users/[id]
+ * 
+ * Request body: { package: 'free' | 'basic' | 'plus' }
+ * 
+ * Automatic Date Management:
+ * - Paid packages: Sets activation date + 1 year expiry
+ * - Free package: Clears activation and expiry dates
+ * 
+ * Statistics Sync:
+ * - Auto-increments paidUserCount on upgrade to paid
+ * - Auto-decrements paidUserCount on downgrade to free
+ * - Creates global-stats record if missing
+ * 
+ * Used by admins for manual package assignment
+ * Returns updated user and current paid user count
+ */
 export async function PATCH(req, { params }) {
   try {
-    // Verify admin authentication
     await verifyAdminAuth(req);
     
     await connectDB();
@@ -63,7 +102,6 @@ export async function PATCH(req, { params }) {
     const body = await req.json();
     const { package: newPackage } = body;
     
-    // Validate package
     if (!['free', 'basic', 'plus'].includes(newPackage)) {
       return NextResponse.json(
         { success: false, error: 'Invalid package type' },
@@ -71,7 +109,6 @@ export async function PATCH(req, { params }) {
       );
     }
     
-    // Find the user
     const user = await User.findById(userId);
     
     if (!user) {
@@ -83,19 +120,16 @@ export async function PATCH(req, { params }) {
     
     const oldPackage = user.package;
     
-    // Update user package
     const updateData = {
       package: newPackage,
     };
     
-    // If changing to a paid package, set activation date and expiry (1 year)
     if (newPackage !== 'free') {
       updateData.packageActivatedAt = new Date();
       const expiryDate = new Date();
       expiryDate.setFullYear(expiryDate.getFullYear() + 1);
       updateData.packageExpiresAt = expiryDate;
     } else {
-      // If changing to free, remove dates
       updateData.packageActivatedAt = null;
       updateData.packageExpiresAt = null;
     }
@@ -106,18 +140,14 @@ export async function PATCH(req, { params }) {
       { new: true, select: '-password -salt' }
     );
     
-    // Update paid user count
     let stats = await Stats.findById('global-stats');
     if (!stats) {
       stats = await Stats.create({ _id: 'global-stats', paidUserCount: 0 });
     }
     
-    // Adjust paid user count based on package change
     if (oldPackage === 'free' && newPackage !== 'free') {
-      // User upgraded to paid
       stats.paidUserCount += 1;
     } else if (oldPackage !== 'free' && newPackage === 'free') {
-      // User downgraded to free
       stats.paidUserCount = Math.max(0, stats.paidUserCount - 1);
     }
     

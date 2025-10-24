@@ -6,7 +6,22 @@ import { useToast } from '../../Toast';
 import { useConfirmDialog } from '../../ConfirmDialog';
 import dynamic from 'next/dynamic';
 
-// Dynamically import RichTextEditor to avoid SSR issues
+/**
+ * Admin Content Management Tab
+ * 
+ * Allows administrators to create, edit, delete, and reorder categories and tasks
+ * 
+ * Key Features:
+ * - CRUD operations for categories (max 6) and tasks (max 12 per category)
+ * - Batch order management (edit mode + save) to reduce DB requests
+ * - Rich text editor for task content and notes
+ * - Real-time task count per category
+ * - Professional toast notifications and confirmation dialogs
+ * 
+ * Optimization: Order changes are batched - admin enters edit mode, makes all
+ * changes in memory, then saves once (uses MongoDB bulkWrite for efficiency)
+ */
+
 const RichTextEditor = dynamic(() => import('../../RichTextEditor'), {
   ssr: false,
   loading: () => <div className="skeleton h-48 w-full"></div>
@@ -18,14 +33,13 @@ const AdminContentTab = () => {
   const [categories, setCategories] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeView, setActiveView] = useState('categories'); // 'categories' or 'tasks'
+  const [activeView, setActiveView] = useState('categories');
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [editingCategory, setEditingCategory] = useState(null);
   const [editingTask, setEditingTask] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
-  // Order editing states
   const [isEditingCategoryOrder, setIsEditingCategoryOrder] = useState(false);
   const [isEditingTaskOrder, setIsEditingTaskOrder] = useState(false);
   const [tempCategories, setTempCategories] = useState([]);
@@ -144,6 +158,18 @@ const AdminContentTab = () => {
   };
 
   // Category Order Management
+  /**
+   * Category Order Management Functions
+   * 
+   * These functions implement the "edit mode" pattern for reordering:
+   * 1. Admin clicks "Edit Order" - enters edit mode, copies to temp state
+   * 2. Admin uses up/down arrows - changes happen in memory only
+   * 3. Admin clicks "Save" - batch updates all changes to database
+   * 4. Or clicks "Cancel" - discards all changes
+   * 
+   * This reduces DB requests from N (one per arrow click) to 1 (batch save)
+   */
+  
   const handleEditCategoryOrder = () => {
     setIsEditingCategoryOrder(true);
     setTempCategories([...categories]);
@@ -174,7 +200,6 @@ const AdminContentTab = () => {
     try {
       setIsSaving(true);
       
-      // Send batch update with new order for all categories
       const updates = tempCategories.map((cat, index) => ({
         id: cat.id,
         order: index + 1
@@ -298,7 +323,16 @@ const AdminContentTab = () => {
     }
   };
 
-  // Task Order Management
+  /**
+   * Task Order Management Functions
+   * 
+   * Similar to category order management, uses edit mode pattern:
+   * - Filters tasks by selected category
+   * - All changes happen in temporary state
+   * - Batch save sends all updates in one API call
+   * - Significantly reduces database load during reordering
+   */
+  
   const handleEditTaskOrder = () => {
     setIsEditingTaskOrder(true);
     const categoryTasks = tasks.filter(t => t.category === selectedCategory);
@@ -330,7 +364,6 @@ const AdminContentTab = () => {
     try {
       setIsSaving(true);
       
-      // Send batch update with new order for all tasks
       const updates = tempTasks.map((task, index) => ({
         id: task.id,
         order: index + 1

@@ -1,12 +1,31 @@
+/**
+ * Admin User Search API
+ * GET /api/admin/users/search?email=<search>&page=<page>
+ * 
+ * Search users by email with pagination
+ * 
+ * Query Parameters:
+ * - email (required): Case-insensitive partial match
+ * - page (optional): Page number, default 1
+ * 
+ * Pagination:
+ * - 10 users per page
+ * - Returns total count, page info, and navigation flags
+ * 
+ * Security:
+ * - Admin only
+ * - Excludes password/salt fields
+ * - Only searches users with role='user' (excludes admins)
+ * 
+ * Use Case: Admin dashboard user lookup for package management
+ */
 import { NextResponse } from 'next/server';
 import connectDB from '../../../../../lib/utils/db';
 import { verifyAdminAuth } from '../../../../../lib/middleware/adminAuth';
 import User from '../../../../../lib/models/user.model';
 
-// GET - Search user by email
 export async function GET(req) {
   try {
-    // Verify admin authentication
     await verifyAdminAuth(req);
     
     await connectDB();
@@ -27,18 +46,14 @@ export async function GET(req) {
       });
     }
     
-    // Search for users by email only (case-insensitive partial match)
-    // Strictly filter by role "user" only
     const query = {
       email: { $regex: email, $options: 'i' },
       role: 'user'
     };
     
-    // Get total count for pagination
     const totalCount = await User.countDocuments(query);
     const totalPages = Math.ceil(totalCount / limit);
     
-    // Get paginated users
     const users = await User.find(query)
       .select('-password -salt')
       .sort({ createdAt: -1 })

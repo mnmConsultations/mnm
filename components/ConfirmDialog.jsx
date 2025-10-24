@@ -2,8 +2,31 @@
 
 import { createContext, useContext, useState, useCallback } from 'react';
 
+/**
+ * Confirmation Dialog System
+ * 
+ * Promise-based confirmation dialog for user actions
+ * Replaces browser's generic confirm() with professional modal dialogs
+ * 
+ * Usage:
+ * const { confirm } = useConfirmDialog();
+ * const isConfirmed = await confirm({
+ *   title: 'Delete User',
+ *   message: 'Are you sure?',
+ *   type: 'danger'
+ * });
+ * if (isConfirmed) { ... }
+ * 
+ * Types: 'danger', 'warning', 'info', 'success'
+ * Returns: Promise<boolean> - true if confirmed, false if cancelled
+ */
+
 const ConfirmDialogContext = createContext(null);
 
+/**
+ * Hook to access confirm function from any component
+ * Must be used within ConfirmDialogProvider
+ */
 export const useConfirmDialog = () => {
   const context = useContext(ConfirmDialogContext);
   if (!context) {
@@ -12,6 +35,10 @@ export const useConfirmDialog = () => {
   return context;
 };
 
+/**
+ * Confirmation Dialog Provider
+ * Wrap your app with this to enable confirmation dialogs globally
+ */
 export const ConfirmDialogProvider = ({ children }) => {
   const [dialogState, setDialogState] = useState({
     isOpen: false,
@@ -59,6 +86,11 @@ export const ConfirmDialogProvider = ({ children }) => {
   );
 };
 
+/**
+ * Confirmation Dialog Component
+ * Renders modal with icon, message, and action buttons
+ * Styling adapts based on dialog type (danger/warning/info/success)
+ */
 const ConfirmDialog = ({ dialogState }) => {
   if (!dialogState.isOpen) return null;
 

@@ -1,3 +1,49 @@
+/**
+ * Database Seeding Script
+ * 
+ * Populates database with initial categories and tasks
+ * Used for development setup and testing
+ * 
+ * Features:
+ * - Loads environment variables from .env file
+ * - Connects to MongoDB
+ * - Clears existing data
+ * - Seeds categories and tasks
+ * - Provides detailed console output
+ * 
+ * Seed Data Source:
+ * - Categories and tasks from lib/data/seedData.js
+ * - Includes all relocation journey phases
+ * - Pre-configured task content
+ * 
+ * Execution Flow:
+ * 1. Load .env variables manually (for script context)
+ * 2. Connect to database using connectDB utility
+ * 3. Clear existing categories and tasks (deleteMany)
+ * 4. Insert seed categories
+ * 5. Insert seed tasks
+ * 6. Display summary grouped by category
+ * 7. Exit process
+ * 
+ * Console Output:
+ * - Progress indicators (🌱 ✓ 📁 📋 ✅ ❌)
+ * - Detailed list of created items
+ * - Summary statistics
+ * - Error messages on failure
+ * 
+ * Usage:
+ * node scripts/seedDatabase.js
+ * 
+ * Environment:
+ * - Requires MONGODB_URI in .env file
+ * - Exits with code 0 on success
+ * - Exits with code 1 on error
+ * 
+ * Warning:
+ * - DESTRUCTIVE: Clears all existing categories and tasks
+ * - Only use in development/staging environments
+ * - DO NOT run on production database
+ */
 const mongoose = require('mongoose');
 const path = require('path');
 const fs = require('fs');

@@ -1,6 +1,49 @@
+/**
+ * Testimonials Component
+ * Landing page testimonials section
+ * 
+ * Features:
+ * - 3 client testimonials with ratings
+ * - Star ratings (1-5 stars)
+ * - Client photos and credentials
+ * - Hover effects on testimonial cards
+ * - Responsive grid layout (1-3 columns)
+ * 
+ * Testimonial Cards:
+ * - Star rating display (filled/unfilled)
+ * - Quote text in italics
+ * - Client photo (circular)
+ * - Client name and role
+ * - Shadow and hover effects
+ * 
+ * Clients Featured:
+ * 1. Priya Sharma - TU Berlin student (5 stars)
+ * 2. Ahmed Hassan - Humboldt PhD candidate (5 stars)
+ * 3. Maria Rodriguez - Software Engineer (4 stars)
+ * 
+ * Layout:
+ * - Section with centered heading
+ * - 3-column grid on desktop, 1 column mobile
+ * - Gray background cards with shadows
+ * - Hover effect increases shadow
+ * 
+ * Icons:
+ * - Star (lucide-react) for ratings
+ * - Filled stars for rating value
+ * - Gray stars for remaining
+ * 
+ * Future Enhancement:
+ * - "Read More Testimonials" button (commented out)
+ * - Link to /testimonials page
+ */
 import Link from "next/link";
 import { Star } from "lucide-react";
 
+/**
+ * Testimonials Array
+ * 3 client reviews with ratings and credentials
+ * Uses randomuser.me for placeholder profile images
+ */
 const testimonials = [
   {
     id: 1,
@@ -31,10 +74,25 @@ const testimonials = [
   },
 ];
 
+/**
+ * Testimonials Component
+ * Renders testimonial cards with ratings and client info
+ * 
+ * Card Structure:
+ * - Star rating at top
+ * - Quote text in middle
+ * - Client photo and info at bottom
+ * 
+ * Rating Display:
+ * - Creates array of 5 stars
+ * - Fills stars up to rating value
+ * - Remaining stars are gray/unfilled
+ */
 const Testimonials = () => {
   return (
     <section className=" bg-white py-16 px-4 md:py-24 md:px-8 lg:px-16">
       <div className=" max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
             What Our Clients Say
@@ -45,12 +103,14 @@ const Testimonials = () => {
           </p>
         </div>
 
+        {/* Testimonials Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {testimonials.map((testimonial) => (
             <div
               key={testimonial.id}
               className="bg-gray-50 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow"
             >
+              {/* Star Rating Display */}
               <div className="flex mb-4">
                 {[...Array(5)].map((_, i) => (
                   <Star
@@ -60,10 +120,12 @@ const Testimonials = () => {
                 ))}
               </div>
 
+              {/* Testimonial Quote */}
               <p className="text-gray-700 mb-6 italic">
                 "{testimonial.content}"
               </p>
 
+              {/* Client Info - Photo and credentials */}
               <div className="flex items-center">
                 <img
                   src={testimonial.image}
@@ -81,6 +143,7 @@ const Testimonials = () => {
           ))}
         </div>
 
+        {/* More Testimonials Button - Commented out for future use */}
         {/* <div className="text-center mt-12">
           <button className="btn btn-outline">
             <Link href="/testimonials">Read More Testimonials</Link>

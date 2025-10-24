@@ -1,8 +1,45 @@
+/**
+ * ServicesHighlight Component
+ * Landing page services overview section
+ * 
+ * Features:
+ * - 6 key service categories with icons
+ * - Brief descriptions for each service
+ * - Links to detailed service page sections
+ * - Hover effects on service cards
+ * - Responsive grid layout (1-2-3 columns)
+ * - "View All Services" CTA button
+ * 
+ * Service Categories:
+ * 1. Pre-Departure Support - Video series, Q&A, starter kits
+ * 2. Arrival & Settlement - Airport pickups, orientation
+ * 3. Documentation Assistance - Anmeldung, banking, enrollment
+ * 4. Cultural Integration - Diwali, Holi, community events
+ * 5. Connectivity Solutions - O2 partnership, mobile plans
+ * 6. Financial Guidance - Banking, budgeting, cost-saving
+ * 
+ * UI Elements:
+ * - Icon in rounded blue background
+ * - Title and description text
+ * - Hover effects: Background darkens, title changes color
+ * - Grid: 1 column mobile, 2 medium, 3 large screens
+ * 
+ * Links:
+ * - Each card links to /services#section-id
+ * - Bottom CTA links to /services page
+ * 
+ * Icons:
+ * - Lucide React icons for visual consistency
+ */
 import Link from "next/link";
 import {
   Book, Building, FileText, Plane, CreditCard, Phone
 } from "lucide-react";
 
+/**
+ * Services Array
+ * 6 highlighted services with descriptions and anchor links
+ */
 const services = [
   {
     id: 1,
@@ -48,10 +85,24 @@ const services = [
   }
 ];
 
+/**
+ * ServicesHighlight Component
+ * Renders service cards grid with hover effects
+ * 
+ * Layout:
+ * - Section with centered heading and description
+ * - Responsive grid of service cards
+ * - CTA button at bottom
+ * 
+ * Interactions:
+ * - Cards are clickable links to service details
+ * - Hover effects on icon background and title color
+ */
 const ServicesHighlight = () => {
   return (
     <section className=" bg-white py-16 px-4 md:py-24 md:px-8 lg:px-16">
       <div className=" max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
             Our Services
@@ -62,6 +113,7 @@ const ServicesHighlight = () => {
           </p>
         </div>
 
+        {/* Services Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map((service) => (
             <Link
@@ -69,17 +121,21 @@ const ServicesHighlight = () => {
               key={service.id}
               className="card shadow-lg md:shadow-xs p-2 md:p-0 flex flex-col items-center text-center group"
             >
+              {/* Service Icon with hover effect */}
               <div className="mb-4 p-3 rounded-full bg-blue-50 group-hover:bg-blue-100 transition-colors">
                 {service.icon}
               </div>
+              {/* Service Title with hover effect */}
               <h3 className="text-xl font-semibold mb-2 text-gray-800 group-hover:text-primary transition-colors">
                 {service.title}
               </h3>
+              {/* Service Description */}
               <p className="text-gray-600">{service.description}</p>
             </Link>
           ))}
         </div>
 
+        {/* CTA Button - Link to full services page */}
         <div className="text-center mt-12">
           <button className="btn btn-link">
             <Link href="/services">View All Services</Link>

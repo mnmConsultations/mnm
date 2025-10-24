@@ -4,18 +4,35 @@ import UserProgress from '@/lib/models/userProgress.model';
 import User from '@/lib/models/user.model';
 import jwt from 'jsonwebtoken';
 
+/**
+ * User Progress API Endpoints
+ * 
+ * Manages user task completion tracking and progress calculations
+ * Tracks overall progress and per-category progress
+ * 
+ * GET: Fetches user's current progress (creates default if none exists)
+ * PUT: Updates task completion status and recalculates all progress percentages
+ */
+
 const JWT_SECRET = process.env.JWT_SECRET || 'your-fallback-secret';
 
+/**
+ * Extract and Verify User from JWT Token
+ * 
+ * Checks Authorization header first (Bearer token), falls back to cookies
+ * Verifies JWT signature and fetches user from database
+ * 
+ * @param {Request} request - Next.js request object
+ * @returns {Promise<Object|null>} User object or null if invalid/missing token
+ */
 async function getUserFromToken(request) {
   try {
-    // Try to get token from Authorization header first
     const authHeader = request.headers.get('authorization');
     let token = null;
     
     if (authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.substring(7); // Remove 'Bearer ' prefix
+      token = authHeader.substring(7);
     } else {
-      // Fallback to cookie
       token = request.cookies.get('token')?.value;
     }
     
@@ -25,7 +42,6 @@ async function getUserFromToken(request) {
     
     const decoded = jwt.verify(token, JWT_SECRET);
     await connectDB();
-    // The token payload uses _id, not userId
     const user = await User.findById(decoded._id);
     return user;
   } catch (error) {
@@ -34,6 +50,18 @@ async function getUserFromToken(request) {
   }
 }
 
+/**
+ * Get User Progress
+ * GET /api/dashboard/progress
+ * 
+ * Returns user's task completion progress including:
+ * - Overall progress percentage
+ * - Per-category progress (beforeArrival, uponArrival, firstWeeks, ongoing)
+ * - List of completed tasks with timestamps
+ * - Package details
+ * 
+ * Auto-creates progress record if user doesn't have one yet
+ */
 export async function GET(request) {
   try {
     const user = await getUserFromToken(request);
@@ -45,7 +73,6 @@ export async function GET(request) {
     
     let userProgress = await UserProgress.findOne({ userId: user._id });
     
-    // Create default progress if doesn't exist
     if (!userProgress) {
       userProgress = new UserProgress({
         userId: user._id,
@@ -82,6 +109,21 @@ export async function GET(request) {
   }
 }
 
+/**
+ * Update Task Completion Status
+ * PUT /api/dashboard/progress
+ * 
+ * Marks a task as completed or uncompleted
+ * Automatically recalculates all progress percentages after update
+ * 
+ * Request body: { taskId: string, completed: boolean }
+ * 
+ * Progress Calculation:
+ * - Overall: (completed tasks / total tasks) * 100
+ * - Per-category: (completed tasks in category / total tasks in category) * 100
+ * 
+ * Returns updated progress object with new percentages
+ */
 export async function PUT(request) {
   try {
     const user = await getUserFromToken(request);
@@ -110,12 +152,9 @@ export async function PUT(request) {
       );
     }
 
-    // Import Task model to get actual task data
     const Task = require('@/lib/models/task.model');
     
-    // Update completed tasks
     if (completed) {
-      // Add task if not already completed
       const existingTask = userProgress.completedTasks.find(task => task.taskId === taskId);
       if (!existingTask) {
         userProgress.completedTasks.push({
@@ -124,19 +163,16 @@ export async function PUT(request) {
         });
       }
     } else {
-      // Remove task from completed
       userProgress.completedTasks = userProgress.completedTasks.filter(
         task => task.taskId !== taskId
       );
     }
 
-    // Recalculate progress based on actual tasks
     const allTasks = await Task.find({ isActive: true });
     const totalTasks = allTasks.length;
     const completedCount = userProgress.completedTasks.length;
     userProgress.overallProgress = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
 
-    // Calculate category-specific progress
     const categories = ['beforeArrival', 'uponArrival', 'firstWeeks', 'ongoing'];
     
     for (const category of categories) {

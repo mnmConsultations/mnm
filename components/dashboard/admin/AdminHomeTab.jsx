@@ -5,6 +5,21 @@ import { apiInstance as axios } from '../../../lib/utils/axios';
 import { useToast } from '../../Toast';
 import { useConfirmDialog } from '../../ConfirmDialog';
 
+/**
+ * Admin Home Tab Component
+ * 
+ * Main dashboard for administrators to manage users
+ * 
+ * Features:
+ * - View count of paid users (users with active subscriptions)
+ * - Search users by email with pagination (10 per page)
+ * - Edit user packages (free, basic, plus) with edit mode pattern
+ * - Delete users (only if they don't have active paid plans)
+ * - Role filtering (only shows regular users, not admins)
+ * 
+ * Edit Mode Pattern: Admin clicks "Edit Package", makes changes in memory,
+ * then clicks "Save" to commit (reduces unnecessary API calls)
+ */
 const AdminHomeTab = () => {
   const toast = useToast();
   const { confirm } = useConfirmDialog();
@@ -130,6 +145,18 @@ const AdminHomeTab = () => {
     }
   };
 
+  /**
+   * User Package Edit Mode Functions
+   * 
+   * Implements edit-then-save pattern for user package management:
+   * 1. handleEditUser: Enters edit mode, copies current package to temp state
+   * 2. handlePackageChange: Updates package in temp state only (no API call)
+   * 3. handleSaveUserChanges: Validates, confirms, then saves to database
+   * 4. handleCancelEdit: Discards changes and exits edit mode
+   * 
+   * Prevents accidental package changes and reduces unnecessary DB updates
+   */
+  
   const handleEditUser = () => {
     setIsEditingUser(true);
     setTempUserData({
@@ -150,7 +177,6 @@ const AdminHomeTab = () => {
   };
 
   const handleSaveUserChanges = async () => {
-    // Check if anything changed
     if (tempUserData.package === selectedUser.package) {
       toast.info('No changes to save');
       setIsEditingUser(false);

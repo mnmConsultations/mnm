@@ -1,3 +1,52 @@
+/**
+ * Single Task Order Update API Endpoint
+ * PATCH /api/admin/tasks/[id]/order
+ * 
+ * Purpose:
+ * - Updates the order of a single task within its category
+ * - Automatically adjusts order of other tasks to maintain sequence integrity
+ * - Used for precise task reordering in admin dashboard
+ * 
+ * Authentication:
+ * - Requires admin authentication (verifyAdminAuth)
+ * - Only admin users can modify task order
+ * 
+ * Route Parameters:
+ * - id: Task ID (from URL path)
+ * 
+ * Request Body:
+ * {
+ *   newOrder: number  // New order position (must be >= 1)
+ * }
+ * 
+ * Response:
+ * Success (200): { success: true, task: Task, tasks: Task[], message?: string }
+ * Error (400): { success: false, error: 'Invalid order value' }
+ * Error (404): { success: false, error: 'Task not found' }
+ * Error (403/500): { success: false, error: error message }
+ * 
+ * Order Update Logic:
+ * Moving task UP (newOrder < oldOrder):
+ *   - Tasks between newOrder and oldOrder get incremented by 1
+ *   - Makes space for the moved task at lower position
+ * 
+ * Moving task DOWN (newOrder > oldOrder):
+ *   - Tasks between oldOrder and newOrder get decremented by 1
+ *   - Fills the gap left by the moved task
+ * 
+ * No change (newOrder === oldOrder):
+ *   - Returns immediately without database updates
+ * 
+ * Database Operations:
+ * 1. Find task by id
+ * 2. Update affected tasks in same category using updateMany
+ * 3. Update target task's order
+ * 4. Return all category tasks sorted by order
+ * 
+ * Usage:
+ * - Called from AdminContentTab.jsx for single task reordering
+ * - Alternative to batch reorder endpoint for individual moves
+ */
 import { NextResponse } from 'next/server';
 import connectDB from '../../../../../../lib/utils/db';
 import { verifyAdminAuth } from '../../../../../../lib/middleware/adminAuth';

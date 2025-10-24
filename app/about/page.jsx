@@ -1,3 +1,45 @@
+/**
+ * About Page
+ * /about
+ * 
+ * Company information and mission statement page
+ * Showcases M&M Consultations' values and services
+ * 
+ * Features:
+ * - Company mission and values
+ * - Why choose us section with icons
+ * - What sets us apart differentiators
+ * - Our approach methodology
+ * - Contact CTA
+ * - Auth-based redirect for logged-in users
+ * 
+ * Content Sections:
+ * 1. Hero - Company tagline and introduction
+ * 2. Mission - Core values and goals
+ * 3. Why Choose Us - 3 key benefits (Pre-Departure, Cultural, Practical)
+ * 4. What Sets Us Apart - Unique differentiators
+ * 5. Our Approach - Student-focused methodology
+ * 6. CTA - Contact button
+ * 
+ * Icons:
+ * - Info: Pre-departure guidance
+ * - Users: Cultural integration
+ * - Star: Practical support
+ * - MapPin, Calendar, Award: Additional features
+ * 
+ * Auth Logic:
+ * - Redirects logged-in users to dashboard
+ * - Admin → /dashboard/admin
+ * - User → /dashboard/user
+ * - Loading state during auth check
+ * 
+ * Images:
+ * - Unsplash images for visual content
+ * - Indian students in Berlin focus
+ * 
+ * Hydration Protection:
+ * - isMounted prevents SSR mismatch
+ */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,15 +48,33 @@ import { useLoggedInUser } from "@/lib/hooks/auth.hooks";
 import { Info, Users, Star, MapPin, Calendar, Award } from 'lucide-react';
 import Link from "next/link";
 
+/**
+ * About Component
+ * Marketing page with company information
+ * 
+ * State:
+ * - isMounted: Hydration protection flag
+ * 
+ * Auth Flow:
+ * 1. Check authentication status
+ * 2. Redirect if logged in
+ * 3. Show loading during check
+ * 4. Render content if not logged in
+ */
 const About = () => {
   const router = useRouter();
   const { data: user, isLoading } = useLoggedInUser();
   const [isMounted, setIsMounted] = useState(false);
 
+  // Hydration protection
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
+  /**
+   * Auth-based Redirect Effect
+   * Redirects authenticated users to role-specific dashboard
+   */
   useEffect(() => {
     // Redirect logged-in users to their dashboard
     if (isMounted && !isLoading && user) {
@@ -26,7 +86,10 @@ const About = () => {
     }
   }, [user, isLoading, isMounted, router]);
 
-  // Show loading state while checking authentication
+  /**
+   * Loading State
+   * Shown during component mount and auth check
+   */
   if (!isMounted || isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -38,13 +101,17 @@ const About = () => {
     );
   }
 
-  // Don't render content if user is logged in (will redirect)
+  /**
+   * Auth Redirect State
+   * Returns null while redirecting logged-in users
+   */
   if (user) {
     return null;
   }
 
     return (
         <div>
+            {/* Hero Section - Company introduction */}
             <section className="bg-gradient-to-r from-blue-50 to-blue-100 py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center">
@@ -56,7 +123,7 @@ const About = () => {
         </div>
       </section>
       
-      {/* Our Mission Section */}
+      {/* Our Mission Section - Company values and goals */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -72,6 +139,7 @@ const About = () => {
                 Through tailored services, strategic partnerships, and a commitment to affordability, we aim to make studying abroad a seamless and enriching experience.
               </p>
             </div>
+            {/* Mission Image - Indian students in Berlin */}
             <div className="rounded-lg overflow-hidden shadow-xl">
               <img 
                 src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=1171&auto=format&fit=crop" 
@@ -83,7 +151,7 @@ const About = () => {
         </div>
       </section>
       
-      {/* Why Choose Us Section */}
+      {/* Why Choose Us Section - 3 key benefits with icons */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center mb-12">
@@ -93,7 +161,9 @@ const About = () => {
             </p>
           </div>
           
+          {/* Benefit Cards Grid - 3 columns on desktop */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Benefit 1: Pre-Departure Guidance */}
             <div className="bg-white p-6 rounded-lg shadow-md">
               <div className="bg-blue-50 p-3 inline-block rounded-full mb-4">
                 <Info className="h-8 w-8 text-primary" />
@@ -104,6 +174,7 @@ const About = () => {
               </p>
             </div>
             
+            {/* Benefit 2: Cultural Integration */}
             <div className="bg-white p-6 rounded-lg shadow-md">
               <div className="bg-blue-50 p-3 inline-block rounded-full mb-4">
                 <Users className="h-8 w-8 text-primary" />
@@ -114,6 +185,7 @@ const About = () => {
               </p>
             </div>
             
+            {/* Benefit 3: Practical Support */}
             <div className="bg-white p-6 rounded-lg shadow-md">
               <div className="bg-blue-50 p-3 inline-block rounded-full mb-4">
                 <Star className="h-8 w-8 text-primary" />
@@ -127,7 +199,7 @@ const About = () => {
         </div>
       </section>
       
-      {/* What Sets Us Apart Section */}
+      {/* What Sets Us Apart Section - Unique differentiators */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center mb-12">
@@ -137,7 +209,9 @@ const About = () => {
             </p>
           </div>
           
+          {/* Differentiator Cards - Full-width stacked */}
           <div className="space-y-8">
+            {/* Differentiator 1: Affordable Packages */}
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h3 className="text-xl font-bold text-gray-900 mb-3">Affordable and Customizable Packages</h3>
               <p className="text-gray-700">
@@ -145,6 +219,7 @@ const About = () => {
               </p>
             </div>
             
+            {/* Differentiator 2: Cultural Events */}
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h3 className="text-xl font-bold text-gray-900 mb-3">Regular Cultural and Social Events</h3>
               <p className="text-gray-700">
@@ -152,6 +227,7 @@ const About = () => {
               </p>
             </div>
             
+            {/* Differentiator 3: Networking */}
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h3 className="text-xl font-bold text-gray-900 mb-3">Networking Opportunities</h3>
               <p className="text-gray-700">
@@ -159,6 +235,7 @@ const About = () => {
               </p>
             </div>
             
+            {/* Differentiator 4: Comprehensive Onboarding */}
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h3 className="text-xl font-bold text-gray-900 mb-3">Comprehensive Onboarding and Support</h3>
               <p className="text-gray-700">
@@ -166,6 +243,7 @@ const About = () => {
               </p>
             </div>
             
+            {/* Differentiator 5: Culturally Relevant Resources */}
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h3 className="text-xl font-bold text-gray-900 mb-3">Culturally Relevant Resources</h3>
               <p className="text-gray-700">
@@ -174,6 +252,7 @@ const About = () => {
             </div>
           </div>
           
+          {/* View Packages CTA */}
           <div className="mt-10 text-center">
             <button className="btn btn-primary text-neutral-content" >
               <Link href="/packages">View Our Packages</Link>
@@ -182,7 +261,7 @@ const About = () => {
         </div>
       </section>
       
-      {/* Team Section */}
+      {/* Team Section - Founders and leadership */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center mb-12">
@@ -192,7 +271,9 @@ const About = () => {
             </p>
           </div>
           
+          {/* Team Grid - 2 columns for founders */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+            {/* Founder 1: Mayur Bafna */}
             <div className="text-center">
               <div className="mb-4 overflow-hidden rounded-full w-48 h-48 mx-auto">
                 <img 
@@ -205,6 +286,7 @@ const About = () => {
               <p className="text-primary">Founder & CEO</p>
             </div>
             
+            {/* Co-Founder: Mruddual Sojitra */}
             <div className="text-center">
               <div className="mb-4 overflow-hidden rounded-full w-48 h-48 mx-auto">
                 <img 
@@ -221,13 +303,14 @@ const About = () => {
         </div>
       </section>
       
-      {/* CTA Section */}
+      {/* Final CTA Section - Contact and explore packages */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold text-gray-900 mb-6">Ready to Start Your German Journey?</h2>
           <p className="text-lg text-gray-700 mb-8">
             Contact Mayur Bafna at +91 9545099997 for an introductory call to select packages tailored to your needs.
           </p>
+          {/* Dual CTA Buttons - Explore packages or contact */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button className="btn btn-primary text-neutral-content" >
               <Link href="/packages">Explore Packages</Link>

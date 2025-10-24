@@ -1,9 +1,30 @@
+/**
+ * Admin Category Management API
+ * /api/admin/categories
+ * 
+ * Admin-only endpoints for managing task categories
+ * Categories organize tasks into relocation journey phases
+ * 
+ * Features:
+ * - List all categories sorted by order
+ * - Create new categories with validation
+ * - Auto-generate camelCase IDs from display names
+ * - Enforce 6 category maximum
+ * - Auto-assign order for new categories
+ * 
+ * Security: Requires admin authentication
+ */
 import { NextResponse } from 'next/server';
 import connectDB from '../../../../lib/utils/db';
 import { verifyAdminAuth } from '../../../../lib/middleware/adminAuth';
 import Category from '../../../../lib/models/category.model';
 
-// GET - Get all categories
+/**
+ * Get All Categories
+ * GET /api/admin/categories
+ * 
+ * Returns categories sorted by order field
+ */
 export async function GET(req) {
   try {
     // Verify admin authentication
@@ -26,10 +47,28 @@ export async function GET(req) {
   }
 }
 
-// POST - Create a new category
+/**
+ * Create New Category
+ * POST /api/admin/categories
+ * 
+ * Request body: { displayName, description?, icon?, color?, estimatedTimeFrame? }
+ * 
+ * Validation:
+ * - Display name: Required, max 50 chars
+ * - Limit: Max 6 categories total
+ * - Uniqueness: Name must be unique
+ * 
+ * ID Generation:
+ * Converts display name to camelCase
+ * Example: "Before Arrival" → "beforeArrival"
+ * 
+ * Defaults:
+ * - icon: 'circle'
+ * - color: '#3B82F6' (blue)
+ * - order: Auto-assigned to end of list
+ */
 export async function POST(req) {
   try {
-    // Verify admin authentication
     await verifyAdminAuth(req);
     
     await connectDB();
@@ -37,7 +76,6 @@ export async function POST(req) {
     const body = await req.json();
     const { displayName, description, icon, color, estimatedTimeFrame } = body;
     
-    // Validate displayName length
     if (!displayName || displayName.length > 50) {
       return NextResponse.json(
         { success: false, error: 'Display name is required and must be 50 characters or less' },
@@ -45,7 +83,6 @@ export async function POST(req) {
       );
     }
     
-    // Check category count (max 6)
     const categoryCount = await Category.countDocuments();
     if (categoryCount >= 6) {
       return NextResponse.json(
@@ -54,14 +91,12 @@ export async function POST(req) {
       );
     }
     
-    // Generate unique ID from displayName (camelCase)
     const id = displayName
       .trim()
       .replace(/\s+(.)/g, (match, char) => char.toUpperCase())
       .replace(/\s+/g, '')
       .replace(/^(.)/, (match, char) => char.toLowerCase());
     
-    // Check if ID already exists
     const existingCategory = await Category.findOne({ id });
     if (existingCategory) {
       return NextResponse.json(
@@ -70,14 +105,12 @@ export async function POST(req) {
       );
     }
     
-    // Get the next order number
     const maxOrderCategory = await Category.findOne().sort({ order: -1 });
     const order = maxOrderCategory ? maxOrderCategory.order + 1 : 1;
     
-    // Create category
     const category = await Category.create({
       id,
-      name: id, // name same as id
+      name: id,
       displayName,
       description: description || '',
       icon: icon || 'circle',

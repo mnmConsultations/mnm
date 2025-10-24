@@ -2,6 +2,14 @@ import { NextResponse } from 'next/server';
 import connectDB from '../../../../lib/utils/db';
 import AuthService from '../../../../lib/services/auth.services';
 
+/**
+ * User Registration API Endpoint
+ * POST /api/auth/signup
+ * 
+ * Creates a new user account with free plan as default
+ * Validates email format and password strength
+ * Returns JWT token and user data on success
+ */
 export async function POST(request) {
   try {
     await connectDB();
@@ -9,7 +17,6 @@ export async function POST(request) {
     const body = await request.json();
     const { firstName, lastName, email, password } = body;
 
-    // Basic validation
     if (!firstName || !email || !password) {
       return NextResponse.json(
         { 
@@ -20,7 +27,6 @@ export async function POST(request) {
       );
     }
 
-    // Email validation
     const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json(
@@ -32,7 +38,6 @@ export async function POST(request) {
       );
     }
 
-    // Password validation
     if (password.length < 6) {
       return NextResponse.json(
         { 

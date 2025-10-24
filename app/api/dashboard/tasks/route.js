@@ -4,12 +4,34 @@ import Task from '@/lib/models/task.model';
 import seedData from '@/lib/data/seedData';
 import { verifyUserAuth, hasActivePaidPlan } from '@/lib/middleware/userAuth';
 
+/**
+ * Get Tasks API Endpoint (User Dashboard)
+ * GET /api/dashboard/tasks
+ * 
+ * Returns all active tasks grouped by category for authenticated users
+ * 
+ * Paywall Protection:
+ * - Requires user to have active paid plan (basic or plus)
+ * - Free users receive 403 with requiresPaidPlan flag
+ * 
+ * Auto-seeding:
+ * - If no tasks exist in database, seeds from predefined data
+ * 
+ * Response Format:
+ * {
+ *   success: true,
+ *   data: {
+ *     beforeArrival: [...tasks],
+ *     uponArrival: [...tasks],
+ *     firstWeeks: [...tasks],
+ *     ongoing: [...tasks]
+ *   }
+ * }
+ */
 export async function GET(request) {
   try {
-    // Verify user authentication and check for paid plan
     const user = await verifyUserAuth(request);
     
-    // Check if user has an active paid plan
     if (!hasActivePaidPlan(user)) {
       return NextResponse.json(
         { 
@@ -23,18 +45,14 @@ export async function GET(request) {
     
     await connectDB();
     
-    // Check if tasks exist, if not seed them
     const taskCount = await Task.countDocuments();
     
     if (taskCount === 0) {
-      // Seed tasks from our predefined data
       await Task.insertMany(seedData.tasks);
     }
     
-    // Get all active tasks grouped by category
     const tasks = await Task.find({ isActive: true }).sort({ category: 1, order: 1 });
     
-    // Group tasks by category
     const groupedTasks = tasks.reduce((acc, task) => {
       if (!acc[task.category]) {
         acc[task.category] = [];
@@ -57,6 +75,16 @@ export async function GET(request) {
   }
 }
 
+/**
+ * Create Task API Endpoint
+ * POST /api/dashboard/tasks
+ * 
+ * Creates a new task in the system
+ * ID is auto-generated from title (slugified)
+ * 
+ * Required fields: title, description, category
+ * Optional: order, estimatedDuration, difficulty, externalLinks, tips, requirements
+ */
 export async function POST(request) {
   try {
     const body = await request.json();
@@ -71,7 +99,6 @@ export async function POST(request) {
 
     await connectDB();
     
-    // Generate unique ID
     const id = title.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
     
     const newTask = new Task({

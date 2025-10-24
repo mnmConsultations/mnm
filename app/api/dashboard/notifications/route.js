@@ -1,3 +1,44 @@
+/**
+ * Dashboard Notifications API
+ * /api/dashboard/notifications
+ * 
+ * User notification management endpoints
+ * Handles fetching, creating, and marking notifications as read
+ * 
+ * Features:
+ * - Fetch user notifications with filters
+ * - Create new notifications
+ * - Mark notifications as read/unread
+ * - Auto-filter expired notifications
+ * 
+ * Authentication:
+ * - getUserFromToken helper supports Bearer token and cookies
+ * - User-scoped queries (only see own notifications)
+ * 
+ * GET /api/dashboard/notifications
+ * Query params:
+ * - limit (default: 10): Number of notifications to return
+ * - unreadOnly (default: false): Filter only unread notifications
+ * 
+ * Response includes:
+ * - notifications: Array of notification objects
+ * - unreadCount: Total count of unread notifications
+ * 
+ * Expiration Filtering:
+ * - Automatically excludes expired notifications (expiresAt < now)
+ * - Includes notifications with no expiry date
+ * 
+ * POST /api/dashboard/notifications
+ * Request body: { title, message, type?, priority?, actionRequired?, actionUrl?, expiresAt? }
+ * Creates new notification for current user
+ * 
+ * PATCH /api/dashboard/notifications
+ * Request body: { notificationId, isRead }
+ * Updates notification read status
+ * Only updates user's own notifications
+ * 
+ * Security: User authentication required for all endpoints
+ */
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/utils/db';
 import Notification from '@/lib/models/notification.model';

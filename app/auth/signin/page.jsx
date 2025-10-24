@@ -1,3 +1,50 @@
+/**
+ * Sign In Page
+ * 
+ * User authentication page with email/password login
+ * Handles role-based redirect after successful sign in
+ * 
+ * Features:
+ * - Email and password input validation
+ * - Real-time error messaging
+ * - Loading states during authentication
+ * - Auto-redirect based on user role
+ * - Link to sign up page
+ * - Link back to home page
+ * 
+ * Authentication Flow:
+ * 1. User enters credentials
+ * 2. Client-side validation (email format, password presence)
+ * 3. useSignin hook sends credentials to API
+ * 4. On success: Token stored, user fetched
+ * 5. useLoggedInUser detects login
+ * 6. Auto-redirect to appropriate dashboard
+ * 
+ * Redirect Logic:
+ * - Admin users → /dashboard/admin
+ * - Regular users → /dashboard/user
+ * - Already logged in → Auto-redirect (skip form)
+ * 
+ * Hydration Protection:
+ * - isMounted state prevents SSR/client mismatch
+ * - Loading spinner shown until mount complete
+ * 
+ * Form Validation:
+ * - Email: Basic regex check (xxx@xxx.xxx)
+ * - Password: Required field check
+ * - Displays error messages below form
+ * 
+ * Error Handling:
+ * - Network errors
+ * - Invalid credentials
+ * - Server errors
+ * - User-friendly error messages
+ * 
+ * Loading States:
+ * - Disabled inputs during submission
+ * - Loading spinner in button
+ * - "Signing in..." text feedback
+ */
 'use client';
 
 import { useState, useEffect } from 'react';

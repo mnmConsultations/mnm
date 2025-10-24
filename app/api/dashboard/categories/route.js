@@ -4,12 +4,25 @@ import Category from '@/lib/models/category.model';
 import seedData from '@/lib/data/seedData';
 import { verifyUserAuth, hasActivePaidPlan } from '@/lib/middleware/userAuth';
 
+/**
+ * Get Categories API Endpoint (User Dashboard)
+ * GET /api/dashboard/categories
+ * 
+ * Returns all active categories sorted by display order
+ * 
+ * Paywall Protection:
+ * - Requires user to have active paid plan (basic or plus)
+ * - Free users receive 403 with requiresPaidPlan flag
+ * 
+ * Auto-seeding:
+ * - If no categories exist in database, seeds from predefined data
+ * 
+ * Response includes: id, name, displayName, description, icon, color, order, timeFrame
+ */
 export async function GET(request) {
   try {
-    // Verify user authentication and check for paid plan
     const user = await verifyUserAuth(request);
     
-    // Check if user has an active paid plan
     if (!hasActivePaidPlan(user)) {
       return NextResponse.json(
         { 
@@ -23,15 +36,12 @@ export async function GET(request) {
     
     await connectDB();
     
-    // Check if categories exist, if not seed them
     const categoryCount = await Category.countDocuments();
     
     if (categoryCount === 0) {
-      // Seed categories from our predefined data
       await Category.insertMany(seedData.categories);
     }
     
-    // Get all active categories
     const categories = await Category.find({ isActive: true }).sort({ order: 1 });
 
     return NextResponse.json({
@@ -48,6 +58,16 @@ export async function GET(request) {
   }
 }
 
+/**
+ * Create Category API Endpoint
+ * POST /api/dashboard/categories
+ * 
+ * Creates a new category in the system
+ * ID is set to the category name value
+ * 
+ * Required fields: name, displayName
+ * Optional: description, icon, color (defaults to #3B82F6), order (defaults to 999), estimatedTimeFrame
+ */
 export async function POST(request) {
   try {
     const body = await request.json();

@@ -1,3 +1,43 @@
+/**
+ * Header Component
+ * 
+ * Main navigation header with authentication integration
+ * Responsive design with mobile menu
+ * 
+ * Features:
+ * - Desktop navigation with all main pages
+ * - Mobile hamburger menu with slide-down navigation
+ * - User authentication state display
+ * - User dropdown menu with dashboard access and logout
+ * - Sticky positioning for persistent navigation
+ * 
+ * Navigation Links:
+ * - Home, Services, Packages, About Us, FAQ
+ * - Conditional: Dashboard (authenticated users only)
+ * 
+ * Authentication Integration:
+ * - useLoggedInUser hook: Fetches current user data
+ * - useSignOut hook: Handles logout functionality
+ * - Shows user avatar with first initial when logged in
+ * - Displays Sign In/Get in touch buttons when logged out
+ * 
+ * User Avatar Dropdown:
+ * - Shows user's full name
+ * - Dashboard link
+ * - Logout button
+ * 
+ * Mobile Menu:
+ * - Toggles with hamburger icon
+ * - Full navigation stack
+ * - Separate Sign In/Sign Up buttons
+ * - Smooth animation on open
+ * 
+ * Styling:
+ * - Dark blue theme (bg-blue-950)
+ * - Sticky header (z-50)
+ * - DaisyUI dropdown components
+ * - Lucide icons for UI elements
+ */
 "use client"
 
 import { useState } from "react";
