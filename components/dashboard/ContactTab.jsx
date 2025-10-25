@@ -506,7 +506,7 @@ const ContactTab = ({ user }) => {
                                 </div>
                                 <div className="collapse-content text-xs">
                                     <p>
-                                        Yes, our Plus plan includes personal consultation. Contact us to learn more.
+                                        Yes, our Premium plan includes personal consultation. Contact us to learn more.
                                     </p>
                                 </div>
                             </div>

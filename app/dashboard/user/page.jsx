@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useLoggedInUser, useSignOut } from '../../../lib/hooks/auth.hooks';
 import HomeTab from '../../../components/dashboard/HomeTab';
 import TasksTab from '../../../components/dashboard/TasksTab';
@@ -164,33 +165,41 @@ const UserDashboard = () => {
     return (
         <div className="min-h-screen bg-base-200">
             {/* Navigation Bar */}
-            <div className="navbar bg-base-100 shadow-lg">
-                <div className="flex-1">
-                    <a href="/" className="btn btn-ghost normal-case text-xl">
+            <header className="bg-blue-950 shadow-sm sticky top-0 z-50">
+                <div className="max-w-7xl mx-auto px-4 flex justify-between items-center py-4">
+                    <Link href="/" className="flex items-center space-x-2">
                         <img
                             src="/MnMLogo-removebg-preview.png"
-                            alt="M&M Logo"
-                            className="h-8"
+                            alt="M&M Consultations Logo"
+                            className="h-10 md:h-13"
                         />
-                    </a>
-                    <h1 className="text-xl font-bold ml-2">User Dashboard</h1>
-                </div>
-                <div className="flex-none gap-2">
-                    <div className="dropdown dropdown-end">
-                        <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
-                            <div className="w-10 rounded-full bg-primary text-primary-content flex items-center justify-center">
-                                {user.firstName?.charAt(0)?.toUpperCase() || 'U'}
+                    </Link>
+                    
+                    <div className="flex-none gap-2">
+                        <div className="dropdown dropdown-end">
+                            <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
+                                <div className="w-10 rounded-full bg-white text-blue-950 flex items-center justify-center">
+                                    {user.firstName?.charAt(0)?.toUpperCase() || 'U'}
+                                </div>
                             </div>
+                            <ul tabIndex={0} className="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52">
+                                <li className="menu-title">
+                                    <span>{user.firstName} {user.lastName}</span>
+                                </li>
+                                <li>
+                                    <Link href="/dashboard/user/profile">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                        Edit Profile
+                                    </Link>
+                                </li>
+                                <li><a onClick={handleSignOut}>Logout</a></li>
+                            </ul>
                         </div>
-                        <ul tabIndex={0} className="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52">
-                            <li className="menu-title">
-                                <span>{user.firstName} {user.lastName}</span>
-                            </li>
-                            <li><a onClick={handleSignOut}>Logout</a></li>
-                        </ul>
                     </div>
                 </div>
-            </div>
+            </header>
 
             {/* Main Content */}
             <div className="container mx-auto px-4 py-6">
@@ -202,11 +211,9 @@ const UserDashboard = () => {
                                 Welcome, {user.firstName} {user.lastName}!
                             </h2>
                             <p className="text-base-content/70">
-                                Role: <span className="badge badge-primary">{user.role?.toUpperCase() || 'USER'}</span>
-                                {' | '}
                                 Plan: <span className={`badge ${
                                     userPackage === 'free' ? 'badge-ghost' :
-                                    userPackage === 'basic' ? 'badge-info' :
+                                    userPackage === 'essential' ? 'badge-info' :
                                     'badge-success'
                                 }`}>
                                     {userPackage.toUpperCase()}

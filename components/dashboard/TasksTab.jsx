@@ -21,7 +21,7 @@
  * 
  * Paywall Logic:
  * - Free users see upgrade prompt
- * - Shows Basic and Plus plan comparison
+ * - Shows Essential and Premium plan comparison
  * - Links to packages page
  * 
  * Task Interaction:
@@ -131,80 +131,90 @@ const TasksTab = ({ user, cachedData, isLoading, onProgressUpdate, onRefresh, on
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
-                            <span>Upgrade to Basic or Plus plan to unlock all relocation tasks and features!</span>
+                            <span>Upgrade to Essential or Premium package to unlock all relocation tasks and features!</span>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div className="card bg-base-200 border-2 border-primary relative">
+                                <div className="badge badge-primary absolute top-2 right-2 z-10">Recommended</div>
+                                <div className="card-body">
+                                    <h3 className="font-bold text-xl mb-1">Essential Package</h3>
+                                    <p className="text-primary font-bold text-lg mb-2">₹25,000</p>
+                                    <p className="text-xs text-base-content/70 mb-3">Core services for a smooth transition</p>
+                                    <ul className="text-left space-y-2 text-sm">
+                                        <li className="flex items-start">
+                                            <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span>Online Q&A Session (1-hour)</span>
+                                        </li>
+                                        <li className="flex items-start">
+                                            <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span>WhatsApp Support Group (6 months)</span>
+                                        </li>
+                                        <li className="flex items-start">
+                                            <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span>Berlin Relocation Blueprint (10-part videos)</span>
+                                        </li>
+                                        <li className="flex items-start">
+                                            <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span>Pre-Departure Starter Kit</span>
+                                        </li>
+                                        <li className="flex items-start">
+                                            <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span>Orientation Bootcamp (2-day)</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
                             <div className="card bg-base-200">
                                 <div className="card-body">
-                                    <h3 className="font-bold text-xl mb-2">Basic Plan</h3>
+                                    <h3 className="font-bold text-xl mb-1">Premium Package</h3>
+                                    <p className="text-primary font-bold text-lg mb-2">₹40,000</p>
+                                    <p className="text-xs text-base-content/70 mb-3">Comprehensive worry-free support</p>
                                     <ul className="text-left space-y-2 text-sm">
-                                        <li className="flex items-center">
-                                            <svg className="w-5 h-5 text-success mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <li className="flex items-start">
+                                            <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                                             </svg>
-                                            Complete task checklist
+                                            <span>Everything in Essential</span>
                                         </li>
-                                        <li className="flex items-center">
-                                            <svg className="w-5 h-5 text-success mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <li className="flex items-start">
+                                            <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                                             </svg>
-                                            Progress tracking
+                                            <span>Airport Pickup Service</span>
                                         </li>
-                                        <li className="flex items-center">
-                                            <svg className="w-5 h-5 text-success mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <li className="flex items-start">
+                                            <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                                             </svg>
-                                            Email support
+                                            <span>Indian Welcome Package</span>
+                                        </li>
+                                        <li className="flex items-start">
+                                            <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span>10-Day Post-Arrival Support</span>
+                                        </li>
+                                        <li className="flex items-start">
+                                            <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span>Buddy Program & Safety Workshop</span>
                                         </li>
                                     </ul>
                                 </div>
                             </div>
-
-                            <div className="card bg-base-200 border-2 border-primary">
-                                <div className="badge badge-primary absolute top-0 right-0 m-2">Popular</div>
-                                <div className="card-body">
-                                    <h3 className="font-bold text-xl mb-2">Plus Plan</h3>
-                                    <ul className="text-left space-y-2 text-sm">
-                                        <li className="flex items-center">
-                                            <svg className="w-5 h-5 text-success mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                            Everything in Basic
-                                        </li>
-                                        <li className="flex items-center">
-                                            <svg className="w-5 h-5 text-success mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                            Priority support
-                                        </li>
-                                        <li className="flex items-center">
-                                            <svg className="w-5 h-5 text-success mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                            Personal consultation
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="card-actions justify-center">
-                            <a href="/packages" className="btn btn-primary btn-lg">
-                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                </svg>
-                                View Plans & Pricing
-                            </a>
-                            <button 
-                                onClick={onNavigateToContact}
-                                className="btn btn-outline btn-lg"
-                            >
-                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                                Contact Us
-                            </button>
                         </div>
                     </div>
                 </div>

@@ -52,6 +52,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useLoggedInUser, useSignOut } from '../../../lib/hooks/auth.hooks';
 import AdminHomeTab from '../../../components/dashboard/admin/AdminHomeTab';
 import AdminContentTab from '../../../components/dashboard/admin/AdminContentTab';
@@ -96,63 +97,40 @@ const AdminDashboard = () => {
 
     return (
         <div className="min-h-screen bg-base-200">
-            <div className="navbar bg-base-100 shadow-lg">
-                <div className="flex-1">
-                    <a href="/" className="btn btn-ghost normal-case text-xl">
+            {/* Navigation Bar */}
+            <header className="bg-blue-950 shadow-sm sticky top-0 z-50">
+                <div className="max-w-7xl mx-auto px-4 flex justify-between items-center py-4">
+                    <Link href="/" className="flex items-center space-x-2">
                         <img
                             src="/MnMLogo-removebg-preview.png"
-                            alt="M&M Logo"
-                            className="h-8"
+                            alt="M&M Consultations Logo"
+                            className="h-10 md:h-13"
                         />
-                    </a>
-                    <h1 className="text-xl font-bold ml-2">Admin Dashboard</h1>
-                </div>
-                <div className="flex-none gap-2">
-                    <a href="/" className="btn btn-ghost btn-sm hidden md:flex">
-                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                        </svg>
-                        Back to Website
-                    </a>
-                    <div className="dropdown dropdown-end">
-                        <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
-                            <div className="w-10 rounded-full bg-error text-error-content flex items-center justify-center">
-                                {user.firstName?.charAt(0)?.toUpperCase() || 'A'}
+                    </Link>
+                    
+                    <div className="flex-none gap-2">
+                        <div className="dropdown dropdown-end">
+                            <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
+                                <div className="w-10 rounded-full bg-white text-blue-950 flex items-center justify-center">
+                                    {user.firstName?.charAt(0)?.toUpperCase() || 'A'}
+                                </div>
                             </div>
+                            <ul tabIndex={0} className="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52">
+                                <li className="menu-title">
+                                    <span>{user.firstName} {user.lastName}</span>
+                                </li>
+                                <li><a onClick={handleSignOut}>Logout</a></li>
+                            </ul>
                         </div>
-                        <ul tabIndex={0} className="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52">
-                            <li className="menu-title">
-                                <span>{user.firstName} {user.lastName}</span>
-                            </li>
-                            <li>
-                                <a href="/">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                                    </svg>
-                                    Back to Website
-                                </a>
-                            </li>
-                            <li>
-                                <a className="justify-between">
-                                    Profile
-                                    <span className="badge">Coming Soon</span>
-                                </a>
-                            </li>
-                            <li><a>Settings</a></li>
-                            <li><a onClick={handleSignOut}>Logout</a></li>
-                        </ul>
                     </div>
                 </div>
-            </div>
+            </header>
 
             <div className="container mx-auto px-4 py-8">
                 <div className="mb-8">
                     <h2 className="text-3xl font-bold mb-2">
                         Welcome, Admin {user.firstName} {user.lastName}!
                     </h2>
-                    <p className="text-base-content/70">
-                        Role: <span className="badge badge-error">{user.role.toUpperCase()}</span>
-                    </p>
                 </div>
 
                 {/* Tabs Navigation */}

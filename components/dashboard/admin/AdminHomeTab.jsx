@@ -13,12 +13,15 @@ import { useConfirmDialog } from '../../ConfirmDialog';
  * Features:
  * - View count of paid users (users with active subscriptions)
  * - Search users by email with pagination (10 per page)
- * - Edit user packages (free, basic, plus) with edit mode pattern
+ * - Edit user packages (free, essential, premium) with custom expiry dates
  * - Delete users (only if they don't have active paid plans)
  * - Role filtering (only shows regular users, not admins)
  * 
  * Edit Mode Pattern: Admin clicks "Edit Package", makes changes in memory,
  * then clicks "Save" to commit (reduces unnecessary API calls)
+ * 
+ * Package Expiry: Admins can set custom expiry dates for paid packages
+ * (must be a future date)
  */
 const AdminHomeTab = () => {
   const toast = useToast();
@@ -149,18 +152,27 @@ const AdminHomeTab = () => {
    * User Package Edit Mode Functions
    * 
    * Implements edit-then-save pattern for user package management:
-   * 1. handleEditUser: Enters edit mode, copies current package to temp state
+   * 1. handleEditUser: Enters edit mode, copies current package and expiry date to temp state
    * 2. handlePackageChange: Updates package in temp state only (no API call)
-   * 3. handleSaveUserChanges: Validates, confirms, then saves to database
-   * 4. handleCancelEdit: Discards changes and exits edit mode
+   * 3. handleExpiryDateChange: Updates expiry date in temp state only (no API call)
+   * 4. handleSaveUserChanges: Validates dates, confirms, then saves to database
+   * 5. handleCancelEdit: Discards changes and exits edit mode
    * 
    * Prevents accidental package changes and reduces unnecessary DB updates
+   * Validates expiry dates are in the future for paid packages
    */
   
   const handleEditUser = () => {
     setIsEditingUser(true);
+    // Set default expiry date to 1 year from now for paid packages
+    const defaultExpiryDate = new Date();
+    defaultExpiryDate.setFullYear(defaultExpiryDate.getFullYear() + 1);
+    
     setTempUserData({
-      package: selectedUser.package
+      package: selectedUser.package,
+      packageExpiresAt: selectedUser.packageExpiresAt 
+        ? new Date(selectedUser.packageExpiresAt).toISOString().split('T')[0]
+        : defaultExpiryDate.toISOString().split('T')[0]
     });
   };
 
@@ -176,17 +188,49 @@ const AdminHomeTab = () => {
     });
   };
 
+  const handleExpiryDateChange = (newDate) => {
+    setTempUserData({
+      ...tempUserData,
+      packageExpiresAt: newDate
+    });
+  };
+
   const handleSaveUserChanges = async () => {
-    if (tempUserData.package === selectedUser.package) {
+    const packageChanged = tempUserData.package !== selectedUser.package;
+    const expiryChanged = tempUserData.packageExpiresAt !== 
+      (selectedUser.packageExpiresAt ? new Date(selectedUser.packageExpiresAt).toISOString().split('T')[0] : null);
+    
+    if (!packageChanged && !expiryChanged) {
       toast.info('No changes to save');
       setIsEditingUser(false);
       setTempUserData(null);
       return;
     }
 
+    // Validate expiry date for paid packages
+    if (tempUserData.package !== 'free' && !tempUserData.packageExpiresAt) {
+      toast.error('Please select an expiry date for paid packages');
+      return;
+    }
+
+    // Validate that expiry date is in the future
+    if (tempUserData.package !== 'free' && new Date(tempUserData.packageExpiresAt) <= new Date()) {
+      toast.error('Expiry date must be in the future');
+      return;
+    }
+
+    let message = '';
+    if (packageChanged && expiryChanged) {
+      message = `Are you sure you want to change this user's package from ${selectedUser.package.toUpperCase()} to ${tempUserData.package.toUpperCase()} and set expiry date to ${new Date(tempUserData.packageExpiresAt).toLocaleDateString()}?`;
+    } else if (packageChanged) {
+      message = `Are you sure you want to change this user's package from ${selectedUser.package.toUpperCase()} to ${tempUserData.package.toUpperCase()}?`;
+    } else {
+      message = `Are you sure you want to change the expiry date to ${new Date(tempUserData.packageExpiresAt).toLocaleDateString()}?`;
+    }
+
     const confirmed = await confirm({
       title: 'Save User Changes',
-      message: `Are you sure you want to change this user's package from ${selectedUser.package.toUpperCase()} to ${tempUserData.package.toUpperCase()}?`,
+      message: message,
       confirmText: 'Save Changes',
       cancelText: 'Cancel',
       type: 'info',
@@ -196,9 +240,16 @@ const AdminHomeTab = () => {
 
     try {
       setIsSaving(true);
-      const response = await axios.patch(`/api/admin/users/${selectedUser._id}`, {
+      const updateData = {
         package: tempUserData.package,
-      });
+      };
+      
+      // Only include expiry date if package is not free
+      if (tempUserData.package !== 'free') {
+        updateData.packageExpiresAt = tempUserData.packageExpiresAt;
+      }
+
+      const response = await axios.patch(`/api/admin/users/${selectedUser._id}`, updateData);
       if (response.data.success) {
         toast.success('User package updated successfully');
         // Update search results
@@ -310,7 +361,7 @@ const AdminHomeTab = () => {
                         <td>
                           <span className={`badge ${
                             user.package === 'free' ? 'badge-ghost' :
-                            user.package === 'basic' ? 'badge-info' :
+                            user.package === 'essential' ? 'badge-info' :
                             'badge-success'
                           }`}>
                             {user.package.toUpperCase()}
@@ -407,14 +458,10 @@ const AdminHomeTab = () => {
                 <p>{selectedUser.email}</p>
               </div>
               <div>
-                <p className="font-semibold">Role:</p>
-                <p className="badge badge-primary">{selectedUser.role}</p>
-              </div>
-              <div>
                 <p className="font-semibold">Current Package:</p>
                 <p className={`badge ${
                   (isEditingUser ? tempUserData.package : selectedUser.package) === 'free' ? 'badge-ghost' :
-                  (isEditingUser ? tempUserData.package : selectedUser.package) === 'basic' ? 'badge-info' :
+                  (isEditingUser ? tempUserData.package : selectedUser.package) === 'essential' ? 'badge-info' :
                   'badge-success'
                 }`}>
                   {(isEditingUser ? tempUserData.package : selectedUser.package).toUpperCase()}
@@ -449,26 +496,63 @@ const AdminHomeTab = () => {
                       Free
                     </button>
                     <button
-                      className={`btn btn-sm ${tempUserData.package === 'basic' ? 'btn-info' : 'btn-outline'}`}
-                      onClick={() => handlePackageChange('basic')}
+                      className={`btn btn-sm ${tempUserData.package === 'essential' ? 'btn-info' : 'btn-outline'}`}
+                      onClick={() => handlePackageChange('essential')}
                       disabled={isSaving}
                     >
-                      Basic
+                      Essential
                     </button>
                     <button
-                      className={`btn btn-sm ${tempUserData.package === 'plus' ? 'btn-success' : 'btn-outline'}`}
-                      onClick={() => handlePackageChange('plus')}
+                      className={`btn btn-sm ${tempUserData.package === 'premium' ? 'btn-success' : 'btn-outline'}`}
+                      onClick={() => handlePackageChange('premium')}
                       disabled={isSaving}
                     >
-                      Plus
+                      Premium
                     </button>
                   </div>
-                  {tempUserData.package !== selectedUser.package && (
+
+                  {/* Expiry Date Picker for Paid Packages */}
+                  {tempUserData.package !== 'free' && (
+                    <div className="mt-4">
+                      <label className="label">
+                        <span className="label-text font-semibold">Package Expiry Date:</span>
+                      </label>
+                      <input
+                        type="date"
+                        className="input input-bordered w-full"
+                        value={tempUserData.packageExpiresAt || ''}
+                        onChange={(e) => handleExpiryDateChange(e.target.value)}
+                        disabled={isSaving}
+                        min={new Date().toISOString().split('T')[0]}
+                      />
+                      <label className="label">
+                        <span className="label-text-alt text-base-content/70">
+                          Select when this package should expire
+                        </span>
+                      </label>
+                    </div>
+                  )}
+
+                  {(tempUserData.package !== selectedUser.package || 
+                    tempUserData.packageExpiresAt !== (selectedUser.packageExpiresAt ? new Date(selectedUser.packageExpiresAt).toISOString().split('T')[0] : null)) && (
                     <div className="alert alert-warning mt-2 text-sm">
                       <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                       </svg>
-                      <span>Package will change from {selectedUser.package.toUpperCase()} to {tempUserData.package.toUpperCase()}</span>
+                      <div>
+                        {tempUserData.package !== selectedUser.package && (
+                          <span>Package will change from {selectedUser.package.toUpperCase()} to {tempUserData.package.toUpperCase()}</span>
+                        )}
+                        {tempUserData.package !== selectedUser.package && 
+                         tempUserData.packageExpiresAt !== (selectedUser.packageExpiresAt ? new Date(selectedUser.packageExpiresAt).toISOString().split('T')[0] : null) && (
+                          <br />
+                        )}
+                        {tempUserData.packageExpiresAt !== (selectedUser.packageExpiresAt ? new Date(selectedUser.packageExpiresAt).toISOString().split('T')[0] : null) && (
+                          <span>
+                            Expiry date will be set to {new Date(tempUserData.packageExpiresAt).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

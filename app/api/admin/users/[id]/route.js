@@ -35,7 +35,7 @@ export async function DELETE(req, { params }) {
     
     await connectDB();
     
-    const userId = params.id;
+    const { id: userId } = await params;
     
     // Find the user
     const user = await User.findById(userId);
@@ -78,10 +78,13 @@ export async function DELETE(req, { params }) {
  * Update User Package
  * PATCH /api/admin/users/[id]
  * 
- * Request body: { package: 'free' | 'basic' | 'plus' }
+ * Request body: { 
+ *   package: 'free' | 'essential' | 'premium',
+ *   packageExpiresAt?: string (ISO date string, required for paid packages)
+ * }
  * 
- * Automatic Date Management:
- * - Paid packages: Sets activation date + 1 year expiry
+ * Date Management:
+ * - Paid packages: Uses provided packageExpiresAt date (must be in future)
  * - Free package: Clears activation and expiry dates
  * 
  * Statistics Sync:
@@ -98,15 +101,40 @@ export async function PATCH(req, { params }) {
     
     await connectDB();
     
-    const userId = params.id;
+    const { id: userId } = await params;
     const body = await req.json();
-    const { package: newPackage } = body;
+    const { package: newPackage, packageExpiresAt } = body;
     
-    if (!['free', 'basic', 'plus'].includes(newPackage)) {
+    if (!['free', 'essential', 'premium'].includes(newPackage)) {
       return NextResponse.json(
         { success: false, error: 'Invalid package type' },
         { status: 400 }
       );
+    }
+
+    // Validate expiry date for paid packages
+    if (newPackage !== 'free') {
+      if (!packageExpiresAt) {
+        return NextResponse.json(
+          { success: false, error: 'Package expiry date is required for paid packages' },
+          { status: 400 }
+        );
+      }
+
+      const expiryDate = new Date(packageExpiresAt);
+      if (isNaN(expiryDate.getTime())) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid expiry date format' },
+          { status: 400 }
+        );
+      }
+
+      if (expiryDate <= new Date()) {
+        return NextResponse.json(
+          { success: false, error: 'Expiry date must be in the future' },
+          { status: 400 }
+        );
+      }
     }
     
     const user = await User.findById(userId);
@@ -126,9 +154,7 @@ export async function PATCH(req, { params }) {
     
     if (newPackage !== 'free') {
       updateData.packageActivatedAt = new Date();
-      const expiryDate = new Date();
-      expiryDate.setFullYear(expiryDate.getFullYear() + 1);
-      updateData.packageExpiresAt = expiryDate;
+      updateData.packageExpiresAt = new Date(packageExpiresAt);
     } else {
       updateData.packageActivatedAt = null;
       updateData.packageExpiresAt = null;

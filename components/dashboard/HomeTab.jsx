@@ -7,7 +7,7 @@
  * Features:
  * - Overall relocation progress display
  * - Per-category progress breakdown (4 categories)
- * - User package information card
+ * - User profile card with package information and expiry status
  * - Notifications center with filtering
  * - Quick actions section
  * 
@@ -23,8 +23,15 @@
  *   - First Weeks (warning yellow)
  *   - Ongoing (secondary purple)
  * 
+ * User Profile Card:
+ * - Centered profile picture with user initials
+ * - User name and email
+ * - Current package badge (Free/Essential/Premium)
+ * - Package expiry date and status (Active/Expired)
+ * - Edit profile button
+ * 
  * Package Info Card:
- * - Shows current plan (Free/Basic/Plus)
+ * - Shows current plan (Free/Essential/Premium)
  * - Displays activation and expiry dates
  * - Color-coded badge by package type
  * - Upgrade call-to-action for free users
@@ -47,6 +54,8 @@
  * - Efficient re-renders on tab switch
  */
 'use client';
+
+import Link from 'next/link';
 
 const HomeTab = ({ user, cachedData, isLoading, onRefresh }) => {
     const userProgress = cachedData?.userProgress;
@@ -228,24 +237,59 @@ const HomeTab = ({ user, cachedData, isLoading, onRefresh }) => {
             <div className="xl:col-span-3 space-y-6">
                 {/* User Profile Card */}
                 <div className="card bg-base-100 shadow-xl">
-                    <div className="card-body text-center">
-                        <div className="avatar mb-4">
-                            <div className="w-16 lg:w-20 rounded-full bg-primary text-primary-content flex items-center justify-center text-xl lg:text-2xl font-bold">
-                                {user.firstName?.charAt(0)?.toUpperCase() || 'U'}
+                    <div className="card-body">
+                        <div className="flex flex-col items-center text-center">
+                            <div className="avatar mb-4">
+                                <div className="w-20 lg:w-24 rounded-full bg-primary text-primary-content flex items-center justify-center text-2xl lg:text-3xl font-bold mx-auto">
+                                    {user.firstName?.charAt(0)?.toUpperCase() || 'U'}
+                                </div>
                             </div>
+                            <h3 className="text-base lg:text-lg font-bold">{user.firstName} {user.lastName}</h3>
+                            <p className="text-xs lg:text-sm text-base-content/70 mb-2 break-all">{user.email}</p>
+                            
+                            {/* Package Information */}
+                            <div className="mt-2 mb-3 w-full">
+                                <div className="flex flex-col items-center gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs lg:text-sm text-base-content/70">Plan:</span>
+                                        <span className={`badge ${
+                                            user.package === 'free' ? 'badge-ghost' :
+                                            user.package === 'essential' ? 'badge-info' :
+                                            'badge-success'
+                                        }`}>
+                                            {user.package?.toUpperCase() || 'FREE'}
+                                        </span>
+                                    </div>
+                                    
+                                    {user.packageExpiresAt && (
+                                        <div className="flex flex-col items-center gap-1">
+                                            <span className="text-xs text-base-content/60">
+                                                Expires: {new Date(user.packageExpiresAt).toLocaleDateString()}
+                                            </span>
+                                            <span className={`text-xs font-medium ${
+                                                new Date(user.packageExpiresAt) > new Date() 
+                                                    ? 'text-success' 
+                                                    : 'text-error'
+                                            }`}>
+                                                {new Date(user.packageExpiresAt) > new Date() 
+                                                    ? '✓ Active' 
+                                                    : '✗ Expired'
+                                                }
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            
+                            <div className="divider my-2"></div>
+                            
+                            <Link href="/dashboard/user/profile" className="btn btn-outline btn-sm w-full">
+                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                Edit Profile
+                            </Link>
                         </div>
-                        <h3 className="text-base lg:text-lg font-bold">{user.firstName} {user.lastName}</h3>
-                        <p className="text-xs lg:text-sm text-base-content/70 mb-2 break-all">{user.email}</p>
-                        <div className="badge badge-primary text-xs">{user.role.toUpperCase()}</div>
-                        
-                        <div className="divider"></div>
-                        
-                        <button className="btn btn-outline btn-sm">
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                            Edit Profile
-                        </button>
                     </div>
                 </div>
 
@@ -260,46 +304,152 @@ const HomeTab = ({ user, cachedData, isLoading, onRefresh }) => {
                         </h3>
                         
                         <div className="space-y-3">
+                            {/* Package Name and Badge */}
                             <div>
-                                <h4 className="font-semibold text-primary text-sm lg:text-base">
-                                    {userProgress?.packageDetails?.name || 'Basic Package'}
-                                </h4>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <h4 className="font-bold text-gray-800 text-sm lg:text-base">
+                                        {user.package === 'essential' ? 'Essential Package' : 
+                                         user.package === 'premium' ? 'Premium Package' : 
+                                         'Free Plan'}
+                                    </h4>
+                                    {user.package === 'essential' && (
+                                        <span className="badge badge-sm badge-info">Most Popular</span>
+                                    )}
+                                </div>
                                 <p className="text-xs lg:text-sm text-base-content/70">
-                                    {userProgress?.packageDetails?.description || 'Essential relocation services'}
+                                    {user.package === 'essential' ? 'Core services for a smooth transition to Germany' : 
+                                     user.package === 'premium' ? 'Comprehensive support for a worry-free experience' : 
+                                     'Limited access to basic features'}
                                 </p>
                             </div>
                             
-                            {userProgress?.packageDetails?.price && (
-                                <div className="flex justify-between items-center">
-                                    <span className="text-xs lg:text-sm">Package Value:</span>
-                                    <span className="font-bold text-success text-sm lg:text-base">
-                                        €{userProgress.packageDetails.price}
+                            {/* Package Price */}
+                            {user.package !== 'free' && (
+                                <div className="flex justify-between items-center py-2">
+                                    <span className="text-xs lg:text-sm text-base-content/70">Package Value:</span>
+                                    <span className="font-bold text-primary text-base lg:text-xl">
+                                        {user.package === 'essential' ? '₹25,000' : '₹40,000'}
                                     </span>
                                 </div>
                             )}
                             
-                            {userProgress?.packageDetails?.features && (
+                            {/* Included Features */}
+                            {user.package !== 'free' && (
                                 <div>
-                                    <h5 className="font-medium mb-2 text-sm">Included Services:</h5>
-                                    <ul className="text-xs lg:text-sm space-y-1">
-                                        {userProgress.packageDetails.features.map((feature, index) => (
-                                            <li key={index} className="flex items-center">
-                                                <svg className="w-3 h-3 lg:w-4 lg:h-4 text-success mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                                </svg>
-                                                {feature}
-                                            </li>
-                                        ))}
+                                    <h5 className="font-semibold text-gray-800 text-xs lg:text-sm mb-2">Included Services:</h5>
+                                    <ul className="space-y-2">
+                                        {user.package === 'essential' && (
+                                            <>
+                                                <li className="flex items-start text-xs lg:text-sm">
+                                                    <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    <span>Online Q&A Session (1-hour group Zoom)</span>
+                                                </li>
+                                                <li className="flex items-start text-xs lg:text-sm">
+                                                    <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    <span>WhatsApp Support Group (6 months pre-arrival)</span>
+                                                </li>
+                                                <li className="flex items-start text-xs lg:text-sm">
+                                                    <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    <span>Berlin Relocation Blueprint (10-part video series)</span>
+                                                </li>
+                                                <li className="flex items-start text-xs lg:text-sm">
+                                                    <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    <span>Pre-Departure Starter Kit</span>
+                                                </li>
+                                                <li className="flex items-start text-xs lg:text-sm">
+                                                    <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    <span>Event Coordination & Group Integration</span>
+                                                </li>
+                                                <li className="flex items-start text-xs lg:text-sm">
+                                                    <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    <span>Orientation Bootcamp (2-day program)</span>
+                                                </li>
+                                            </>
+                                        )}
+                                        {user.package === 'premium' && (
+                                            <>
+                                                <li className="flex items-start text-xs lg:text-sm">
+                                                    <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    <span className="font-medium">Everything in Essential Package</span>
+                                                </li>
+                                                <li className="flex items-start text-xs lg:text-sm">
+                                                    <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    <span>Airport Pickup Service</span>
+                                                </li>
+                                                <li className="flex items-start text-xs lg:text-sm">
+                                                    <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    <span>Indian Welcome Package</span>
+                                                </li>
+                                                <li className="flex items-start text-xs lg:text-sm">
+                                                    <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    <span>10-Day Post-Arrival Support</span>
+                                                </li>
+                                                <li className="flex items-start text-xs lg:text-sm">
+                                                    <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    <span>Buddy Program (1-2 months mentorship)</span>
+                                                </li>
+                                                <li className="flex items-start text-xs lg:text-sm">
+                                                    <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    <span>Safety & Emergency Workshop</span>
+                                                </li>
+                                                <li className="flex items-start text-xs lg:text-sm">
+                                                    <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    <span>1-1 Pre-Departure Discussion</span>
+                                                </li>
+                                            </>
+                                        )}
                                     </ul>
                                 </div>
                             )}
                             
-                            <div className="alert alert-info text-xs lg:text-sm mt-4">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-5 h-5">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                <span>Need to upgrade your plan? Contact our support team for assistance.</span>
-                            </div>
+                            {/* Upgrade CTA for Free Users */}
+                            {user.package === 'free' && (
+                                <div className="alert alert-info text-xs lg:text-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-5 h-5">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <div>
+                                        <div className="font-semibold">Upgrade to unlock full access</div>
+                                        <div className="text-xs mt-1">Get Essential or Premium package for complete relocation support</div>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Support CTA for Paid Users */}
+                            {user.package !== 'free' && (
+                                <div className="alert alert-success text-xs lg:text-sm mt-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-5 h-5">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <span>Need help or want to upgrade? Contact our support team for assistance.</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
