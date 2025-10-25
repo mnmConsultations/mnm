@@ -23,6 +23,7 @@ import { NextResponse } from 'next/server';
 import connectDB from '../../../../../lib/utils/db';
 import { verifyAdminAuth } from '../../../../../lib/middleware/adminAuth';
 import User from '../../../../../lib/models/user.model';
+import { escapeRegex, sanitizeEmail } from '../../../../../lib/utils/sanitize';
 
 export async function GET(req) {
   try {
@@ -31,12 +32,12 @@ export async function GET(req) {
     await connectDB();
     
     const { searchParams } = new URL(req.url);
-    const email = searchParams.get('email');
+    const emailQuery = searchParams.get('email');
     const page = parseInt(searchParams.get('page')) || 1;
     const limit = 10;
     const skip = (page - 1) * limit;
     
-    if (!email) {
+    if (!emailQuery) {
       return NextResponse.json({
         success: true,
         users: [],
@@ -46,8 +47,12 @@ export async function GET(req) {
       });
     }
     
+    // SECURITY FIX: Sanitize and escape email input to prevent NoSQL injection
+    const sanitizedEmail = sanitizeEmail(emailQuery);
+    const escapedEmail = escapeRegex(sanitizedEmail || emailQuery);
+    
     const query = {
-      email: { $regex: email, $options: 'i' },
+      email: { $regex: escapedEmail, $options: 'i' },
       role: 'user'
     };
     

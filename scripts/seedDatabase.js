@@ -82,40 +82,58 @@ async function seedDatabase() {
     await Task.deleteMany({});
     console.log('  ✓ Cleared tasks\n');
 
-    // Seed categories
+    // Seed categories and create a mapping from old string IDs to MongoDB _ids
     console.log('📁 Seeding categories...');
-    const categories = await Category.insertMany(seedData.categories);
-    console.log(`  ✓ Created ${categories.length} categories:`);
-    categories.forEach(cat => {
-      console.log(`    - ${cat.displayName} (${cat.id})`);
-    });
+    const categoryIdMap = {};
+    const createdCategories = [];
+    
+    for (const categoryData of seedData.categories) {
+      const { id, ...categoryFields } = categoryData; // Remove custom 'id' field
+      const category = await Category.create(categoryFields);
+      categoryIdMap[id] = category._id; // Map old ID to new MongoDB _id
+      createdCategories.push(category);
+      console.log(`  ✓ Created: ${category.displayName} (${id} → ${category._id})`);
+    }
     console.log('');
 
-    // Seed tasks
+    // Seed tasks, replacing category string IDs with MongoDB ObjectIds
     console.log('📋 Seeding tasks...');
-    const tasks = await Task.insertMany(seedData.tasks);
-    console.log(`  ✓ Created ${tasks.length} tasks:`);
+    const createdTasks = [];
+    
+    for (const taskData of seedData.tasks) {
+      const { id, category, ...taskFields } = taskData; // Remove custom 'id', extract category
+      const taskWithObjectId = {
+        ...taskFields,
+        category: categoryIdMap[category] // Replace category string ID with ObjectId
+      };
+      const task = await Task.create(taskWithObjectId);
+      createdTasks.push(task);
+    }
+    
+    console.log(`  ✓ Created ${createdTasks.length} tasks`);
     
     // Group tasks by category for display
-    const tasksByCategory = tasks.reduce((acc, task) => {
-      if (!acc[task.category]) {
-        acc[task.category] = [];
+    const tasksByCategory = {};
+    for (const task of createdTasks) {
+      await task.populate('category', 'displayName');
+      const categoryName = task.category.displayName;
+      if (!tasksByCategory[categoryName]) {
+        tasksByCategory[categoryName] = [];
       }
-      acc[task.category].push(task.title);
-      return acc;
-    }, {});
+      tasksByCategory[categoryName].push(task.title);
+    }
 
-    Object.keys(tasksByCategory).forEach(category => {
-      console.log(`\n  ${category}:`);
-      tasksByCategory[category].forEach(title => {
+    Object.keys(tasksByCategory).forEach(categoryName => {
+      console.log(`\n  ${categoryName}:`);
+      tasksByCategory[categoryName].forEach(title => {
         console.log(`    - ${title}`);
       });
     });
 
     console.log('\n✅ Database seeding completed successfully!\n');
     console.log('Summary:');
-    console.log(`  • Categories: ${categories.length}`);
-    console.log(`  • Tasks: ${tasks.length}`);
+    console.log(`  • Categories: ${createdCategories.length}`);
+    console.log(`  • Tasks: ${createdTasks.length}`);
     console.log('');
 
     process.exit(0);

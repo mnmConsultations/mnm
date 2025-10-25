@@ -63,7 +63,7 @@ export async function PATCH(req, { params }) {
     
     await connectDB();
     
-    const categoryId = params.id;
+    const { id: categoryId } = await params;
     const body = await req.json();
     const { newOrder } = body;
     
@@ -75,7 +75,7 @@ export async function PATCH(req, { params }) {
     }
     
     // Find the category
-    const category = await Category.findOne({ id: categoryId });
+    const category = await Category.findById(categoryId);
     if (!category) {
       return NextResponse.json(
         { success: false, error: 'Category not found' },

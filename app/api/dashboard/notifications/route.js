@@ -45,6 +45,7 @@ import Notification from '@/lib/models/notification.model';
 import User from '@/lib/models/user.model';
 import jwt from 'jsonwebtoken';
 import { checkAndUpdatePackageExpiry } from '@/lib/middleware/packageExpiryCheck';
+import { sanitizeUrl, sanitizeString } from '@/lib/utils/sanitize';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-fallback-secret';
 
@@ -176,17 +177,40 @@ export async function POST(request) {
         { status: 400 }
       );
     }
+    
+    // Sanitize inputs
+    const sanitizedTitle = sanitizeString(title, 100);
+    const sanitizedMessage = sanitizeString(message, 500);
+    
+    // SECURITY FIX: Validate actionUrl
+    let validatedActionUrl = null;
+    if (actionUrl) {
+      const allowedDomains = [
+        process.env.NEXT_PUBLIC_APP_URL?.replace(/https?:\/\//, ''),
+        'localhost',
+        '127.0.0.1'
+      ].filter(Boolean);
+      
+      validatedActionUrl = sanitizeUrl(actionUrl, allowedDomains);
+      
+      if (!validatedActionUrl) {
+        return NextResponse.json(
+          { error: 'Invalid action URL' },
+          { status: 400 }
+        );
+      }
+    }
 
     await connectDB();
     
     const notification = new Notification({
       userId: user._id,
-      title,
-      message,
+      title: sanitizedTitle,
+      message: sanitizedMessage,
       type: type || 'info',
       priority: priority || 'medium',
       actionRequired: actionRequired || false,
-      actionUrl,
+      actionUrl: validatedActionUrl,
       expiresAt: expiresAt ? new Date(expiresAt) : null
     });
 

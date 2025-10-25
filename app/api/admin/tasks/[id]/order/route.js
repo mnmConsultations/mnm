@@ -60,7 +60,7 @@ export async function PATCH(req, { params }) {
     
     await connectDB();
     
-    const taskId = params.id;
+    const { id: taskId } = await params;
     const body = await req.json();
     const { newOrder } = body;
     
@@ -72,7 +72,7 @@ export async function PATCH(req, { params }) {
     }
     
     // Find the task
-    const task = await Task.findOne({ id: taskId });
+    const task = await Task.findById(taskId);
     if (!task) {
       return NextResponse.json(
         { success: false, error: 'Task not found' },

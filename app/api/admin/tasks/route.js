@@ -8,7 +8,7 @@
  * Features:
  * - Retrieve all tasks or filter by category
  * - Create new tasks with validation
- * - Auto-generate unique IDs from titles
+ * - Uses MongoDB auto-generated _id
  * - Enforce 12 task limit per category
  * - Auto-assign order within categories
  * 
@@ -23,12 +23,12 @@ import { notifyEntityChange } from '../../../../lib/services/notification.servic
 
 /**
  * Get All Tasks or Tasks by Category
- * GET /api/admin/tasks?category=beforeArrival
+ * GET /api/admin/tasks?category=507f1f77bcf86cd799439011
  * 
  * Query params:
- * - category (optional): Filter tasks by category ID
+ * - category (optional): Filter tasks by category ObjectId
  * 
- * Returns tasks sorted by category and order
+ * Returns tasks sorted by category and order, with populated category details
  */
 export async function GET(req) {
   try {
@@ -41,7 +41,9 @@ export async function GET(req) {
     const category = searchParams.get('category');
     
     const query = category ? { category } : {};
-    const tasks = await Task.find(query).sort({ category: 1, order: 1 });
+    const tasks = await Task.find(query)
+      .populate('category', 'displayName name color icon')
+      .sort({ category: 1, order: 1 });
     
     return NextResponse.json({
       success: true,
@@ -65,13 +67,8 @@ export async function GET(req) {
  * Validation:
  * - Title: Required, max 50 chars
  * - Description: Required, max 800 chars
- * - Category: Must exist in database
+ * - Category: Must be valid ObjectId and exist in database
  * - Limit: Max 12 tasks per category
- * 
- * ID Generation:
- * - Converts title to kebab-case
- * - Appends counter if duplicate exists
- * Example: "Register Address" → "register-address"
  * 
  * Order Assignment:
  * - Automatically assigns next order number in category
@@ -167,7 +164,7 @@ export async function POST(req) {
       }
     }
     
-    const categoryExists = await Category.findOne({ id: category });
+    const categoryExists = await Category.findById(category);
     if (!categoryExists) {
       return NextResponse.json(
         { success: false, error: 'Category does not exist' },
@@ -183,25 +180,10 @@ export async function POST(req) {
       );
     }
     
-    const baseId = title
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-');
-    
-    let id = baseId;
-    let counter = 1;
-    while (await Task.findOne({ id })) {
-      id = `${baseId}-${counter}`;
-      counter++;
-    }
-    
     const maxOrderTask = await Task.findOne({ category }).sort({ order: -1 });
     const order = maxOrderTask ? maxOrderTask.order + 1 : 1;
     
     const task = await Task.create({
-      id,
       title,
       description,
       category,
@@ -214,10 +196,13 @@ export async function POST(req) {
       requirements: requirements || [],
     });
     
+    // Populate category for response
+    await task.populate('category', 'displayName name color icon');
+    
     // Notify users about new task
     await notifyEntityChange({
       entityType: 'task',
-      entityId: task.id,
+      entityId: task._id.toString(),
       action: 'created',
       entityName: task.title,
     });

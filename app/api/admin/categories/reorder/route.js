@@ -30,7 +30,7 @@ export async function PATCH(req) {
 
     const bulkOps = categories.map(cat => ({
       updateOne: {
-        filter: { id: cat.id },
+        filter: { _id: cat.id },
         update: { $set: { order: cat.order } }
       }
     }));

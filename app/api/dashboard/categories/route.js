@@ -12,13 +12,13 @@ import { checkAndUpdatePackageExpiry } from '@/lib/middleware/packageExpiryCheck
  * Returns all active categories sorted by display order
  * 
  * Paywall Protection:
- * - Requires user to have active paid plan (basic or plus)
+ * - Requires user to have active paid plan (essential or premium)
  * - Free users receive 403 with requiresPaidPlan flag
  * 
  * Auto-seeding:
  * - If no categories exist in database, seeds from predefined data
  * 
- * Response includes: id, name, displayName, description, icon, color, order, timeFrame
+ * Response includes: _id, name, displayName, description, icon, color, order, timeFrame
  */
 export async function GET(request) {
   try {
@@ -67,7 +67,7 @@ export async function GET(request) {
  * POST /api/dashboard/categories
  * 
  * Creates a new category in the system
- * ID is set to the category name value
+ * Uses MongoDB auto-generated _id
  * 
  * Required fields: name, displayName
  * Optional: description, icon, color (defaults to #3B82F6), order (defaults to 999), estimatedTimeFrame
@@ -87,7 +87,6 @@ export async function POST(request) {
     await connectDB();
     
     const newCategory = new Category({
-      id: name,
       name,
       displayName,
       description,

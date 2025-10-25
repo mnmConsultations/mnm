@@ -5,10 +5,9 @@
  * Admin-only CRUD operations for individual tasks
  * 
  * Features:
- * - Retrieve task by ID
+ * - Retrieve task by MongoDB _id
  * - Update task with validation
  * - Delete task with category minimum enforcement
- * - Special handling: ID regeneration when title changes
  * 
  * Security: Requires admin authentication
  */
@@ -23,7 +22,7 @@ import { notifyEntityChange } from '../../../../../lib/services/notification.ser
  * Get Single Task
  * GET /api/admin/tasks/[id]
  * 
- * Returns task details by ID
+ * Returns task details by MongoDB _id with populated category
  */
 export async function GET(req, { params }) {
   try {
@@ -32,8 +31,8 @@ export async function GET(req, { params }) {
     
     await connectDB();
     
-    const taskId = params.id;
-    const task = await Task.findOne({ id: taskId });
+    const { id: taskId } = await params;
+    const task = await Task.findById(taskId).populate('category', 'displayName name color icon');
     
     if (!task) {
       return NextResponse.json(
@@ -61,20 +60,12 @@ export async function GET(req, { params }) {
  * 
  * Updates task with partial fields
  * 
- * Special Behavior - ID Regeneration:
- * When title changes:
- * 1. Generate new kebab-case ID from title
- * 2. Delete old task record
- * 3. Create new task with new ID
- * 4. Return { idChanged: true, oldId, newId }
- * 
- * This ensures IDs always match titles for consistency
- * Frontend must handle ID changes in URLs and references
- * 
  * Validation:
  * - Title: Max 50 chars
  * - Description: Max 800 chars
- * - Category change: Verify exists and under 12 task limit
+ * - Category change: Verify exists (ObjectId) and under 12 task limit
+ * 
+ * Note: MongoDB _id never changes, simplifying updates
  */
 export async function PATCH(req, { params }) {
   try {
@@ -82,7 +73,7 @@ export async function PATCH(req, { params }) {
     
     await connectDB();
     
-    const taskId = params.id;
+    const { id: taskId } = await params;
     const body = await req.json();
     const { 
       title, 
@@ -97,7 +88,7 @@ export async function PATCH(req, { params }) {
       requirements,
     } = body;
     
-    const task = await Task.findOne({ id: taskId });
+    const task = await Task.findById(taskId);
     if (!task) {
       return NextResponse.json(
         { success: false, error: 'Task not found' },
@@ -109,7 +100,7 @@ export async function PATCH(req, { params }) {
     const changes = [];
     if (title !== undefined && title !== task.title) changes.push('title');
     if (description !== undefined && description !== task.description) changes.push('description');
-    if (category !== undefined && category !== task.category) changes.push('category');
+    if (category !== undefined && category.toString() !== task.category.toString()) changes.push('category');
     if (estimatedDuration !== undefined && estimatedDuration !== task.estimatedDuration) changes.push('duration');
     if (difficulty !== undefined && difficulty !== task.difficulty) changes.push('difficulty');
     if (externalLinks !== undefined) changes.push('links');
@@ -174,59 +165,6 @@ export async function PATCH(req, { params }) {
           { status: 400 }
         );
       }
-      
-      const baseId = title
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-');
-      
-      let newId = baseId;
-      let counter = 1;
-      while (newId !== taskId && await Task.findOne({ id: newId })) {
-        newId = `${baseId}-${counter}`;
-        counter++;
-      }
-      
-      if (newId !== taskId) {
-        await Task.deleteOne({ id: taskId });
-        
-        const updatedTask = await Task.create({
-          id: newId,
-          title,
-          description: description !== undefined ? description : task.description,
-          category: category !== undefined ? category : task.category,
-          order: order !== undefined ? order : task.order,
-          estimatedDuration: estimatedDuration !== undefined ? estimatedDuration : task.estimatedDuration,
-          difficulty: difficulty !== undefined ? difficulty : task.difficulty,
-          externalLinks: externalLinks !== undefined ? externalLinks : task.externalLinks,
-          helpfulLinks: helpfulLinks !== undefined ? helpfulLinks : task.helpfulLinks,
-          tips: tips !== undefined ? tips : task.tips,
-          requirements: requirements !== undefined ? requirements : task.requirements,
-          isRequired: task.isRequired,
-          isActive: task.isActive,
-        });
-        
-        // Notify users about task update (with ID change)
-        if (changes.length > 0) {
-          await notifyEntityChange({
-            entityType: 'task',
-            entityId: newId,
-            action: 'updated',
-            entityName: title,
-            changes,
-          });
-        }
-        
-        return NextResponse.json({
-          success: true,
-          task: updatedTask,
-          idChanged: true,
-          oldId: taskId,
-          newId: newId,
-        });
-      }
     }
     
     if (description !== undefined) {
@@ -238,8 +176,8 @@ export async function PATCH(req, { params }) {
       }
     }
     
-    if (category !== undefined && category !== task.category) {
-      const categoryExists = await Category.findOne({ id: category });
+    if (category !== undefined && category.toString() !== task.category.toString()) {
+      const categoryExists = await Category.findById(category);
       if (!categoryExists) {
         return NextResponse.json(
           { success: false, error: 'Category does not exist' },
@@ -268,11 +206,11 @@ export async function PATCH(req, { params }) {
     if (tips !== undefined) updateData.tips = tips;
     if (requirements !== undefined) updateData.requirements = requirements;
     
-    const updatedTask = await Task.findOneAndUpdate(
-      { id: taskId },
+    const updatedTask = await Task.findByIdAndUpdate(
+      taskId,
       updateData,
       { new: true }
-    );
+    ).populate('category', 'displayName name color icon');
     
     // Notify users about task update
     if (changes.length > 0) {
@@ -304,10 +242,7 @@ export async function PATCH(req, { params }) {
  * 
  * Removes task from database
  * 
- * Business Rule: Minimum 1 Task Per Category
- * - Prevents deletion if task is the last in its category
- * - Ensures each category always has at least one task
- * - Maintains data integrity for user dashboards
+ * Note: Categories can exist without tasks
  */
 export async function DELETE(req, { params }) {
   try {
@@ -315,9 +250,9 @@ export async function DELETE(req, { params }) {
     
     await connectDB();
     
-    const taskId = params.id;
+    const { id: taskId } = await params;
     
-    const task = await Task.findOne({ id: taskId });
+    const task = await Task.findById(taskId);
     if (!task) {
       return NextResponse.json(
         { success: false, error: 'Task not found' },
@@ -325,18 +260,10 @@ export async function DELETE(req, { params }) {
       );
     }
     
-    const taskCount = await Task.countDocuments({ category: task.category });
-    if (taskCount <= 1) {
-      return NextResponse.json(
-        { success: false, error: 'Cannot delete the last task in a category. Minimum 1 task per category required.' },
-        { status: 400 }
-      );
-    }
-    
     // Store task title before deletion for notification
     const taskTitle = task.title;
     
-    await Task.deleteOne({ id: taskId });
+    await Task.findByIdAndDelete(taskId);
     
     // Notify users about task deletion
     await notifyEntityChange({

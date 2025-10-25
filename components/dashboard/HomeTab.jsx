@@ -58,16 +58,38 @@ import { useState, useEffect } from 'react';
 
 const HomeTab = ({ user, cachedData, isLoading, onRefresh }) => {
     const userProgress = cachedData?.userProgress;
+    const [categories, setCategories] = useState([]);
     const [notifications, setNotifications] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalNotifications, setTotalNotifications] = useState(0);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
+    const [isLoadingCategories, setIsLoadingCategories] = useState(false);
     const notificationsPerPage = 15;
 
     useEffect(() => {
         fetchNotifications(1);
+        fetchCategories();
     }, []);
+
+    const fetchCategories = async () => {
+        try {
+            setIsLoadingCategories(true);
+            const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            
+            const response = await fetch('/api/dashboard/categories', { headers });
+            
+            if (response.ok) {
+                const data = await response.json();
+                setCategories(data.data || []);
+            }
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+        } finally {
+            setIsLoadingCategories(false);
+        }
+    };
 
     const fetchNotifications = async (page = 1) => {
         try {
@@ -142,65 +164,61 @@ const HomeTab = ({ user, cachedData, isLoading, onRefresh }) => {
 
                         {/* Category Progress */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                            <div className="space-y-3">
-                                <div>
-                                    <div className="flex justify-between items-center mb-1">
-                                        <span className="text-sm font-medium">Before Arrival</span>
-                                        <span className="text-sm font-bold">
-                                            {userProgress?.categoryProgress?.beforeArrival || 0}%
-                                        </span>
-                                    </div>
-                                    <progress 
-                                        className="progress progress-info w-full h-2" 
-                                        value={userProgress?.categoryProgress?.beforeArrival || 0} 
-                                        max="100"
-                                    ></progress>
+                            {isLoadingCategories ? (
+                                <div className="col-span-2 flex items-center justify-center py-8">
+                                    <div className="loading loading-spinner loading-md"></div>
                                 </div>
-                                
-                                <div>
-                                    <div className="flex justify-between items-center mb-1">
-                                        <span className="text-sm font-medium">Upon Arrival</span>
-                                        <span className="text-sm font-bold">
-                                            {userProgress?.categoryProgress?.uponArrival || 0}%
-                                        </span>
-                                    </div>
-                                    <progress 
-                                        className="progress progress-success w-full h-2" 
-                                        value={userProgress?.categoryProgress?.uponArrival || 0} 
-                                        max="100"
-                                    ></progress>
+                            ) : categories.length > 0 ? (
+                                categories.map((category) => {
+                                    const categoryId = category._id.toString();
+                                    const progress = userProgress?.categoryProgress?.[categoryId] || 0;
+                                    
+                                    // Determine progress bar color based on category color or default colors
+                                    const getProgressClass = (categoryId) => {
+                                        // Map common category IDs to progress classes
+                                        const colorMap = {
+                                            'beforeArrival': 'progress-info',
+                                            'uponArrival': 'progress-success',
+                                            'firstWeeks': 'progress-warning',
+                                            'ongoing': 'progress-secondary',
+                                        };
+                                        return colorMap[categoryId] || 'progress-primary';
+                                    };
+                                    
+                                    return (
+                                        <div key={category._id}>
+                                            <div className="flex justify-between items-center mb-1">
+                                                <div className="flex items-center gap-2">
+                                                    {category.icon && (
+                                                        <span className="text-sm">{category.icon}</span>
+                                                    )}
+                                                    <span className="text-sm font-medium">
+                                                        {category.displayName}
+                                                    </span>
+                                                </div>
+                                                <span className="text-sm font-bold">
+                                                    {progress}%
+                                                </span>
+                                            </div>
+                                            <progress 
+                                                className={`progress ${getProgressClass(categoryId)} w-full h-2`}
+                                                value={progress} 
+                                                max="100"
+                                            ></progress>
+                                            {category.estimatedTimeFrame && (
+                                                <p className="text-xs text-base-content/50 mt-1">
+                                                    {category.estimatedTimeFrame}
+                                                </p>
+                                            )}
+                                        </div>
+                                    );
+                                })
+                            ) : (
+                                <div className="col-span-2 text-center py-8 text-base-content/60">
+                                    <p className="text-sm">No categories available yet.</p>
+                                    <p className="text-xs mt-1">Categories will appear here once added by admin.</p>
                                 </div>
-                            </div>
-                            
-                            <div className="space-y-3">
-                                <div>
-                                    <div className="flex justify-between items-center mb-1">
-                                        <span className="text-sm font-medium">First Weeks</span>
-                                        <span className="text-sm font-bold">
-                                            {userProgress?.categoryProgress?.firstWeeks || 0}%
-                                        </span>
-                                    </div>
-                                    <progress 
-                                        className="progress progress-warning w-full h-2" 
-                                        value={userProgress?.categoryProgress?.firstWeeks || 0} 
-                                        max="100"
-                                    ></progress>
-                                </div>
-                                
-                                <div>
-                                    <div className="flex justify-between items-center mb-1">
-                                        <span className="text-sm font-medium">Ongoing</span>
-                                        <span className="text-sm font-bold">
-                                            {userProgress?.categoryProgress?.ongoing || 0}%
-                                        </span>
-                                    </div>
-                                    <progress 
-                                        className="progress progress-secondary w-full h-2" 
-                                        value={userProgress?.categoryProgress?.ongoing || 0} 
-                                        max="100"
-                                    ></progress>
-                                </div>
-                            </div>
+                            )}
                         </div>
                     </div>
                 </div>

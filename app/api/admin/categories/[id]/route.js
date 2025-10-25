@@ -5,10 +5,9 @@
  * Admin-only CRUD operations for individual categories
  * 
  * Features:
- * - Retrieve category by ID
+ * - Retrieve category by MongoDB _id
  * - Update category with validation
  * - Delete category (only if no tasks)
- * - Cascading updates: When category ID changes, all related tasks are updated
  * 
  * Security: Requires admin authentication
  */
@@ -23,7 +22,7 @@ import { notifyEntityChange } from '../../../../../lib/services/notification.ser
  * Get Single Category
  * GET /api/admin/categories/[id]
  * 
- * Returns category details by ID
+ * Returns category details by MongoDB _id
  */
 export async function GET(req, { params }) {
   try {
@@ -32,8 +31,8 @@ export async function GET(req, { params }) {
     
     await connectDB();
     
-    const categoryId = params.id;
-    const category = await Category.findOne({ id: categoryId });
+    const { id: categoryId } = await params;
+    const category = await Category.findById(categoryId);
     
     if (!category) {
       return NextResponse.json(
@@ -61,20 +60,11 @@ export async function GET(req, { params }) {
  * 
  * Updates category with partial fields
  * 
- * Special Behavior - Cascading ID Update:
- * When display name changes:
- * 1. Generate new camelCase ID
- * 2. Update all related tasks with new category ID
- * 3. Delete old category record
- * 4. Create new category with new ID
- * 5. Return { idChanged: true, oldId, newId }
- * 
- * This maintains referential integrity across all tasks
- * Frontend must handle ID changes in navigation and state
- * 
  * Validation:
- * - Display name: Max 50 chars
- * - Uniqueness: New name must not conflict with existing
+ * - Display name: Max 50 chars, must be unique
+ * - Estimated time frame: Must be valid enum value
+ * 
+ * Note: MongoDB _id never changes, ensuring referential integrity
  */
 export async function PATCH(req, { params }) {
   try {
@@ -82,11 +72,11 @@ export async function PATCH(req, { params }) {
     
     await connectDB();
     
-    const categoryId = params.id;
+    const { id: categoryId } = await params;
     const body = await req.json();
     const { displayName, description, icon, color, order, estimatedTimeFrame } = body;
     
-    const category = await Category.findOne({ id: categoryId });
+    const category = await Category.findById(categoryId);
     if (!category) {
       return NextResponse.json(
         { success: false, error: 'Category not found' },
@@ -127,70 +117,32 @@ export async function PATCH(req, { params }) {
         );
       }
       
-      const newId = displayName
-        .trim()
-        .replace(/\s+(.)/g, (match, char) => char.toUpperCase())
-        .replace(/\s+/g, '')
-        .replace(/^(.)/, (match, char) => char.toLowerCase());
-      
-      if (newId !== categoryId) {
-        const existingCategory = await Category.findOne({ id: newId });
-        if (existingCategory) {
-          return NextResponse.json(
-            { success: false, error: 'A category with this name already exists' },
-            { status: 400 }
-          );
-        }
-        
-        await Task.updateMany(
-          { category: categoryId },
-          { category: newId }
+      // Check for duplicate display names (excluding current category)
+      const existingCategory = await Category.findOne({ 
+        displayName: { $regex: new RegExp(`^${displayName}$`, 'i') },
+        _id: { $ne: categoryId }
+      });
+      if (existingCategory) {
+        return NextResponse.json(
+          { success: false, error: 'A category with this name already exists' },
+          { status: 400 }
         );
-        
-        await Category.deleteOne({ id: categoryId });
-        
-        const updatedCategory = await Category.create({
-          id: newId,
-          name: newId,
-          displayName,
-          description: description !== undefined ? description : category.description,
-          icon: icon !== undefined ? icon : category.icon,
-          color: color !== undefined ? color : category.color,
-          order: order !== undefined ? order : category.order,
-          estimatedTimeFrame: estimatedTimeFrame !== undefined ? estimatedTimeFrame : category.estimatedTimeFrame,
-        });
-        
-        // Notify users about category update (with ID change)
-        if (changes.length > 0) {
-          await notifyEntityChange({
-            entityType: 'category',
-            entityId: newId,
-            action: 'updated',
-            entityName: displayName,
-            changes,
-          });
-        }
-        
-        return NextResponse.json({
-          success: true,
-          category: updatedCategory,
-          idChanged: true,
-          oldId: categoryId,
-          newId: newId,
-        });
       }
     }
     
     const updateData = {};
-    if (displayName !== undefined) updateData.displayName = displayName;
+    if (displayName !== undefined) {
+      updateData.displayName = displayName;
+      updateData.name = displayName; // Keep name in sync
+    }
     if (description !== undefined) updateData.description = description;
     if (icon !== undefined) updateData.icon = icon;
     if (color !== undefined) updateData.color = color;
     if (order !== undefined) updateData.order = order;
     if (estimatedTimeFrame !== undefined) updateData.estimatedTimeFrame = estimatedTimeFrame;
     
-    const updatedCategory = await Category.findOneAndUpdate(
-      { id: categoryId },
+    const updatedCategory = await Category.findByIdAndUpdate(
+      categoryId,
       updateData,
       { new: true }
     );
@@ -227,13 +179,9 @@ export async function PATCH(req, { params }) {
  * 
  * Business Rules:
  * 1. Minimum 1 category required - prevents deletion of last category
- * 2. No orphan tasks - prevents deletion if category has tasks
+ * 2. Cascade delete - automatically deletes all tasks in the category
  * 
- * Error Messages:
- * - Shows task count if tasks exist
- * - Instructs admin to delete tasks first
- * 
- * This maintains data integrity and prevents broken task relationships
+ * This maintains data integrity by cleaning up orphaned tasks
  */
 export async function DELETE(req, { params }) {
   try {
@@ -241,9 +189,9 @@ export async function DELETE(req, { params }) {
     
     await connectDB();
     
-    const categoryId = params.id;
+    const { id: categoryId } = await params;
     
-    const category = await Category.findOne({ id: categoryId });
+    const category = await Category.findById(categoryId);
     if (!category) {
       return NextResponse.json(
         { success: false, error: 'Category not found' },
@@ -259,18 +207,17 @@ export async function DELETE(req, { params }) {
       );
     }
     
+    // Delete all tasks in this category (cascade delete)
     const taskCount = await Task.countDocuments({ category: categoryId });
     if (taskCount > 0) {
-      return NextResponse.json(
-        { success: false, error: `Cannot delete category with ${taskCount} task(s). Delete tasks first.` },
-        { status: 400 }
-      );
+      await Task.deleteMany({ category: categoryId });
+      console.log(`Deleted ${taskCount} task(s) associated with category: ${category.displayName}`);
     }
     
     // Store category name before deletion for notification
     const categoryName = category.displayName;
     
-    await Category.deleteOne({ id: categoryId });
+    await Category.findByIdAndDelete(categoryId);
     
     // Notify users about category deletion
     await notifyEntityChange({

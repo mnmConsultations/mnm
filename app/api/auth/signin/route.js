@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import connectDB from '../../../../lib/utils/db';
 import AuthService from '../../../../lib/services/auth.services';
+import { checkRateLimit, getClientIp, RateLimitPresets } from '../../../../lib/middleware/rateLimit';
+import { sanitizeEmail } from '../../../../lib/utils/sanitize';
 
 /**
  * User Sign In API Endpoint
@@ -9,14 +11,22 @@ import AuthService from '../../../../lib/services/auth.services';
  * Authenticates user with email and password
  * Returns JWT token and user data on success
  * Obscures whether email or password is incorrect for security
+ * 
+ * Security Features:
+ * - Rate limiting (5 attempts per 15 minutes per email)
+ * - Input sanitization
+ * - Generic error messages to prevent enumeration
  */
 export async function POST(request) {
   try {
     await connectDB();
     
     const body = await request.json();
-    const { email, password } = body;
-
+    let { email, password } = body;
+    
+    // Sanitize email
+    email = sanitizeEmail(email);
+    
     if (!email || !password) {
       return NextResponse.json(
         { 
@@ -26,8 +36,29 @@ export async function POST(request) {
         { status: 400 }
       );
     }
+    
+    // Rate limiting by email to prevent brute force
+    const rateLimitCheck = checkRateLimit(
+      `signin:${email}`, 
+      RateLimitPresets.AUTH.maxRequests,
+      RateLimitPresets.AUTH.windowMs
+    );
+    
+    if (!rateLimitCheck.allowed) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: `Too many login attempts. Please try again in ${rateLimitCheck.retryAfter} seconds` 
+        },
+        { 
+          status: 429,
+          headers: { 'Retry-After': rateLimitCheck.retryAfter.toString() }
+        }
+      );
+    }
 
-    const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+    // Enhanced email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json(
         { 
@@ -55,6 +86,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('Signin error:', error);
     
+    // Generic error message - don't reveal if email exists or password is wrong
     if (error.message.includes('not found') || error.message.includes('Invalid Password')) {
       return NextResponse.json(
         { 
@@ -65,10 +97,11 @@ export async function POST(request) {
       );
     }
 
+    // Don't expose internal error details
     return NextResponse.json(
       { 
         success: false, 
-        message: 'Internal server error' 
+        message: 'Authentication failed. Please try again.' 
       },
       { status: 500 }
     );

@@ -5,6 +5,7 @@ import { apiInstance as axios } from '../../../lib/utils/axios';
 import { useToast } from '../../Toast';
 import { useConfirmDialog } from '../../ConfirmDialog';
 import dynamic from 'next/dynamic';
+import IconPicker from '../../IconPicker';
 
 /**
  * Admin Content Management Tab
@@ -22,7 +23,7 @@ import dynamic from 'next/dynamic';
  * changes in memory, then saves once (uses MongoDB bulkWrite for efficiency)
  */
 
-const RichTextEditor = dynamic(() => import('../../RichTextEditor'), {
+const RichTextEditor = dynamic(() => import('@/components/RichTextEditor'), {
   ssr: false,
   loading: () => <div className="skeleton h-48 w-full"></div>
 });
@@ -107,13 +108,13 @@ const AdminContentTab = () => {
       if (editingCategory._id) {
         // Update existing category
         const response = await axios.patch(
-          `/api/admin/categories/${editingCategory.id}`,
+          `/api/admin/categories/${editingCategory._id}`,
           editingCategory
         );
         if (response.data.success) {
           toast.success('Category updated successfully');
           fetchCategories();
-          fetchTasks(); // Refresh tasks as category ID might have changed
+          fetchTasks(); // Refresh tasks as category might have changed
         }
       } else {
         // Create new category
@@ -201,7 +202,7 @@ const AdminContentTab = () => {
       setIsSaving(true);
       
       const updates = tempCategories.map((cat, index) => ({
-        id: cat.id,
+        id: cat._id,
         order: index + 1
       }));
 
@@ -243,7 +244,10 @@ const AdminContentTab = () => {
       return;
     }
     
-    const categoryTasks = tasks.filter(t => t.category === selectedCategory);
+    const categoryTasks = tasks.filter(t => {
+      const taskCatId = t.category?._id?.toString() || t.category?.toString();
+      return taskCatId === selectedCategory;
+    });
     if (categoryTasks.length >= 12) {
       toast.warning('Maximum of 12 tasks per category allowed');
       return;
@@ -275,7 +279,7 @@ const AdminContentTab = () => {
       if (editingTask._id) {
         // Update existing task
         const response = await axios.patch(
-          `/api/admin/tasks/${editingTask.id}`,
+          `/api/admin/tasks/${editingTask._id}`,
           editingTask
         );
         if (response.data.success) {
@@ -336,7 +340,10 @@ const AdminContentTab = () => {
   
   const handleEditTaskOrder = () => {
     setIsEditingTaskOrder(true);
-    const categoryTasks = tasks.filter(t => t.category === selectedCategory);
+    const categoryTasks = tasks.filter(t => {
+      const taskCatId = t.category?._id?.toString() || t.category?.toString();
+      return taskCatId === selectedCategory;
+    });
     setTempTasks([...categoryTasks]);
   };
 
@@ -366,7 +373,7 @@ const AdminContentTab = () => {
       setIsSaving(true);
       
       const updates = tempTasks.map((task, index) => ({
-        id: task.id,
+        id: task._id,
         order: index + 1
       }));
 
@@ -407,11 +414,14 @@ const AdminContentTab = () => {
 
   const categoryTaskCounts = categories.map(cat => ({
     ...cat,
-    taskCount: tasks.filter(t => t.category === cat.id).length
+    taskCount: tasks.filter(t => t.category?._id?.toString() === cat._id.toString() || t.category === cat._id.toString()).length
   }));
 
   const filteredTasks = selectedCategory ? 
-    tasks.filter(t => t.category === selectedCategory) : 
+    tasks.filter(t => {
+      const taskCatId = t.category?._id?.toString() || t.category?.toString();
+      return taskCatId === selectedCategory;
+    }) : 
     tasks;
 
   return (
@@ -523,7 +533,7 @@ const AdminContentTab = () => {
                         <td>
                           <div>
                             <div className="font-bold">{category.displayName}</div>
-                            <div className="text-xs text-gray-500">{category.id}</div>
+                            <div className="text-xs text-gray-500 font-mono">{category._id}</div>
                           </div>
                         </td>
                         <td className="max-w-xs truncate">{category.description}</td>
@@ -546,7 +556,7 @@ const AdminContentTab = () => {
                             </button>
                             <button
                               className="btn btn-xs btn-error"
-                              onClick={() => handleDeleteCategory(category.id)}
+                              onClick={() => handleDeleteCategory(category._id)}
                               disabled={category.taskCount > 0}
                             >
                               Delete
@@ -584,11 +594,11 @@ const AdminContentTab = () => {
                   <button
                     key={category._id}
                     className={`btn btn-sm ${
-                      selectedCategory === category.id ? 'btn-primary' : 'btn-outline'
+                      selectedCategory === category._id.toString() ? 'btn-primary' : 'btn-outline'
                     }`}
                     onClick={() => {
-                      setSelectedCategory(category.id);
-                      fetchTasks(category.id);
+                      setSelectedCategory(category._id.toString());
+                      fetchTasks(category._id);
                     }}
                   >
                     {category.displayName}
@@ -606,7 +616,7 @@ const AdminContentTab = () => {
                   Tasks
                   {selectedCategory && (
                     <span className="text-sm font-normal">
-                      ({filteredTasks.length}/12 in {categories.find(c => c.id === selectedCategory)?.displayName})
+                      ({filteredTasks.length}/12 in {categories.find(c => c._id.toString() === selectedCategory)?.displayName})
                     </span>
                   )}
                 </h2>
@@ -694,7 +704,7 @@ const AdminContentTab = () => {
                           <td>
                             <div>
                               <div className="font-bold max-w-xs truncate">{task.title}</div>
-                              <div className="text-xs text-gray-500">{task.id}</div>
+                              <div className="text-xs text-gray-500 font-mono">{task._id}</div>
                             </div>
                           </td>
                           <td>
@@ -717,7 +727,7 @@ const AdminContentTab = () => {
                               </button>
                               <button
                                 className="btn btn-xs btn-error"
-                                onClick={() => handleDeleteTask(task.id)}
+                                onClick={() => handleDeleteTask(task._id)}
                               >
                                 Delete
                               </button>
@@ -780,14 +790,13 @@ const AdminContentTab = () => {
                   <label className="label">
                     <span className="label-text">Icon</span>
                   </label>
-                  <input
-                    type="text"
-                    className="input input-bordered"
+                  <IconPicker
                     value={editingCategory.icon}
-                    onChange={(e) => setEditingCategory({
+                    onChange={(icon) => setEditingCategory({
                       ...editingCategory,
-                      icon: e.target.value
+                      icon: icon
                     })}
+                    placeholder="Choose an icon"
                   />
                 </div>
 
@@ -923,7 +932,7 @@ const AdminContentTab = () => {
                     })}
                   >
                     {categories.map((cat) => (
-                      <option key={cat._id} value={cat.id}>
+                      <option key={cat._id} value={cat._id}>
                         {cat.displayName}
                       </option>
                     ))}

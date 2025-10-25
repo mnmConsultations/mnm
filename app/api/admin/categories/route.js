@@ -8,7 +8,7 @@
  * Features:
  * - List all categories sorted by order
  * - Create new categories with validation
- * - Auto-generate camelCase IDs from display names
+ * - Uses MongoDB _id for identification
  * - Enforce 6 category maximum
  * - Auto-assign order for new categories
  * 
@@ -55,18 +55,14 @@ export async function GET(req) {
  * Request body: { displayName, description?, icon?, color?, estimatedTimeFrame? }
  * 
  * Validation:
- * - Display name: Required, max 50 chars
+ * - Display name: Required, max 50 chars, must be unique
  * - Limit: Max 6 categories total
- * - Uniqueness: Name must be unique
- * 
- * ID Generation:
- * Converts display name to camelCase
- * Example: "Before Arrival" → "beforeArrival"
  * 
  * Defaults:
  * - icon: 'circle'
  * - color: '#3B82F6' (blue)
  * - order: Auto-assigned to end of list
+ * - name: Same as displayName
  */
 export async function POST(req) {
   try {
@@ -109,13 +105,10 @@ export async function POST(req) {
       );
     }
     
-    const id = displayName
-      .trim()
-      .replace(/\s+(.)/g, (match, char) => char.toUpperCase())
-      .replace(/\s+/g, '')
-      .replace(/^(.)/, (match, char) => char.toLowerCase());
-    
-    const existingCategory = await Category.findOne({ id });
+    // Check for duplicate display names
+    const existingCategory = await Category.findOne({ 
+      displayName: { $regex: new RegExp(`^${displayName}$`, 'i') } 
+    });
     if (existingCategory) {
       return NextResponse.json(
         { success: false, error: 'A category with this name already exists' },
@@ -127,8 +120,7 @@ export async function POST(req) {
     const order = maxOrderCategory ? maxOrderCategory.order + 1 : 1;
     
     const category = await Category.create({
-      id,
-      name: id,
+      name: displayName,
       displayName,
       description: description || '',
       icon: icon || 'circle',
@@ -140,7 +132,7 @@ export async function POST(req) {
     // Notify users about new category
     await notifyEntityChange({
       entityType: 'category',
-      entityId: category.id,
+      entityId: category._id.toString(),
       action: 'created',
       entityName: category.displayName,
     });

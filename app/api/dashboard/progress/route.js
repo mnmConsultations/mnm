@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/utils/db';
 import UserProgress from '@/lib/models/userProgress.model';
 import User from '@/lib/models/user.model';
+import Task from '@/lib/models/task.model';
+import Category from '@/lib/models/category.model';
 import jwt from 'jsonwebtoken';
 import { checkAndUpdatePackageExpiry } from '@/lib/middleware/packageExpiryCheck';
 import { hasActivePaidPlan } from '@/lib/middleware/userAuth';
@@ -58,7 +60,7 @@ async function getUserFromToken(request) {
  * 
  * Returns user's task completion progress including:
  * - Overall progress percentage
- * - Per-category progress (beforeArrival, uponArrival, firstWeeks, ongoing)
+ * - Per-category progress (uses category _id as string keys)
  * - List of completed tasks with timestamps
  * - Package details
  * 
@@ -79,15 +81,17 @@ export async function GET(request) {
     let userProgress = await UserProgress.findOne({ userId: user._id });
     
     if (!userProgress) {
+      // Get all active categories to initialize progress
+      const categories = await Category.find({ isActive: true });
+      const categoryProgress = {};
+      categories.forEach(cat => {
+        categoryProgress[cat._id.toString()] = 0;
+      });
+      
       userProgress = new UserProgress({
         userId: user._id,
         overallProgress: 0,
-        categoryProgress: {
-          beforeArrival: 0,
-          uponArrival: 0,
-          firstWeeks: 0,
-          ongoing: 0
-        },
+        categoryProgress,
         completedTasks: [],
         packageType: 'basic',
         packageDetails: {
@@ -97,6 +101,34 @@ export async function GET(request) {
           price: 299
         }
       });
+      await userProgress.save();
+    } else {
+      // Recalculate progress to ensure it's up-to-date with current tasks and categories
+      const allTasks = await Task.find({ isActive: true });
+      const categories = await Category.find({ isActive: true });
+      
+      // Calculate overall progress
+      const totalTasks = allTasks.length;
+      const completedCount = userProgress.completedTasks.length;
+      userProgress.overallProgress = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
+      
+      // Calculate progress for each category using _id
+      const categoryProgress = {};
+      categories.forEach(category => {
+        const categoryTasks = allTasks.filter(task => 
+          task.category.toString() === category._id.toString()
+        );
+        const completedCategoryTasks = userProgress.completedTasks.filter(completed => {
+          // Safely convert taskId to string (handles both ObjectId and string)
+          const completedTaskIdStr = completed.taskId?.toString ? completed.taskId.toString() : String(completed.taskId);
+          return categoryTasks.some(task => task._id.toString() === completedTaskIdStr);
+        });
+        
+        categoryProgress[category._id.toString()] = categoryTasks.length > 0 ? 
+          Math.round((completedCategoryTasks.length / categoryTasks.length) * 100) : 0;
+      });
+      
+      userProgress.categoryProgress = categoryProgress;
       await userProgress.save();
     }
 
@@ -163,6 +195,16 @@ export async function PUT(request) {
 
     await connectDB();
     
+    // SECURITY FIX: Verify taskId exists and is active before allowing update
+    const task = await Task.findById(taskId);
+    
+    if (!task || !task.isActive) {
+      return NextResponse.json(
+        { error: 'Invalid task ID or task is not active' },
+        { status: 400 }
+      );
+    }
+    
     let userProgress = await UserProgress.findOne({ userId: user._id });
     
     if (!userProgress) {
@@ -171,42 +213,49 @@ export async function PUT(request) {
         { status: 404 }
       );
     }
-
-    const Task = require('@/lib/models/task.model');
     
     if (completed) {
-      const existingTask = userProgress.completedTasks.find(task => task.taskId === taskId);
+      const existingTask = userProgress.completedTasks.find(task => {
+        const taskIdStr = task.taskId?.toString ? task.taskId.toString() : String(task.taskId);
+        return taskIdStr === taskId.toString();
+      });
       if (!existingTask) {
         userProgress.completedTasks.push({
-          taskId,
+          taskId: task._id,
           completedAt: new Date()
         });
       }
     } else {
-      userProgress.completedTasks = userProgress.completedTasks.filter(
-        task => task.taskId !== taskId
-      );
+      userProgress.completedTasks = userProgress.completedTasks.filter(task => {
+        const taskIdStr = task.taskId?.toString ? task.taskId.toString() : String(task.taskId);
+        return taskIdStr !== taskId.toString();
+      });
     }
 
+    // Recalculate overall progress
     const allTasks = await Task.find({ isActive: true });
     const totalTasks = allTasks.length;
     const completedCount = userProgress.completedTasks.length;
     userProgress.overallProgress = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
 
-    const categories = ['beforeArrival', 'uponArrival', 'firstWeeks', 'ongoing'];
+    // Dynamically calculate progress for all active categories using _id
+    const categories = await Category.find({ isActive: true });
+    const categoryProgress = {};
     
     for (const category of categories) {
-      const categoryTasks = allTasks.filter(task => task.category === category);
-      const completedCategoryTasks = userProgress.completedTasks.filter(completed => 
-        categoryTasks.some(task => task.id === completed.taskId)
+      const categoryTasks = allTasks.filter(task => 
+        task.category.toString() === category._id.toString()
       );
+      const completedCategoryTasks = userProgress.completedTasks.filter(completed => {
+        const completedTaskIdStr = completed.taskId?.toString ? completed.taskId.toString() : String(completed.taskId);
+        return categoryTasks.some(task => task._id.toString() === completedTaskIdStr);
+      });
       
-      const categoryProgress = categoryTasks.length > 0 ? 
+      categoryProgress[category._id.toString()] = categoryTasks.length > 0 ? 
         Math.round((completedCategoryTasks.length / categoryTasks.length) * 100) : 0;
-      
-      userProgress.categoryProgress[category] = categoryProgress;
     }
-
+    
+    userProgress.categoryProgress = categoryProgress;
     await userProgress.save();
 
     return NextResponse.json({

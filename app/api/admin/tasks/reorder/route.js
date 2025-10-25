@@ -59,7 +59,7 @@ export async function PATCH(req) {
     // Batch update all tasks in a single operation
     const bulkOps = tasks.map(task => ({
       updateOne: {
-        filter: { id: task.id, category: category },
+        filter: { _id: task.id, category: category },
         update: { $set: { order: task.order } }
       }
     }));

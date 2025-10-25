@@ -45,7 +45,7 @@
  */
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const TasksTab = ({ user, cachedData, isLoading, onProgressUpdate, onRefresh, onNavigateToContact }) => {
     const categories = cachedData?.categories || [];
@@ -53,8 +53,18 @@ const TasksTab = ({ user, cachedData, isLoading, onProgressUpdate, onRefresh, on
     const userProgress = cachedData?.userProgress;
     const requiresPaidPlan = cachedData?.requiresPaidPlan || false;
     
-    const [activeCategory, setActiveCategory] = useState('beforeArrival');
+    // Set initial active category to first category's _id (not hardcoded string)
+    const [activeCategory, setActiveCategory] = useState(
+        categories.length > 0 ? categories[0]._id.toString() : null
+    );
     const [expandedTasks, setExpandedTasks] = useState({});
+
+    // Update activeCategory when categories load
+    useEffect(() => {
+        if (categories.length > 0 && !activeCategory) {
+            setActiveCategory(categories[0]._id.toString());
+        }
+    }, [categories, activeCategory]);
 
     const handleTaskToggle = async (taskId, completed) => {
         try {
@@ -89,14 +99,23 @@ const TasksTab = ({ user, cachedData, isLoading, onProgressUpdate, onRefresh, on
     };
 
     const isTaskCompleted = (taskId) => {
-        return userProgress?.completedTasks?.some(task => task.taskId === taskId) || false;
+        if (!userProgress?.completedTasks) return false;
+        return userProgress.completedTasks.some(task => {
+            const completedTaskId = task.taskId?.toString ? task.taskId.toString() : String(task.taskId);
+            const currentTaskId = taskId?.toString ? taskId.toString() : String(taskId);
+            return completedTaskId === currentTaskId;
+        });
     };
 
     const getCategoryProgress = (categoryId) => {
         if (!tasks[categoryId] || !userProgress) return 0;
         const categoryTasks = tasks[categoryId];
         const completedTasks = categoryTasks.filter(task => 
-            userProgress.completedTasks?.some(completed => completed.taskId === task.id)
+            userProgress.completedTasks?.some(completed => {
+                const completedTaskId = completed.taskId?.toString ? completed.taskId.toString() : String(completed.taskId);
+                const currentTaskId = task._id?.toString ? task._id.toString() : String(task._id);
+                return completedTaskId === currentTaskId;
+            })
         );
         return categoryTasks.length > 0 ? Math.round((completedTasks.length / categoryTasks.length) * 100) : 0;
     };
@@ -250,30 +269,34 @@ const TasksTab = ({ user, cachedData, isLoading, onProgressUpdate, onRefresh, on
 
             {/* Category Tabs */}
             <div className="tabs tabs-boxed bg-base-100 p-1">
-                {categories.map((category) => (
-                    <a 
-                        key={category.id}
-                        className={`tab tab-lg ${activeCategory === category.id ? 'tab-active' : ''}`}
-                        onClick={() => setActiveCategory(category.id)}
-                    >
-                        <div className="flex items-center space-x-2">
-                            <span>{category.displayName}</span>
-                            <div className="badge badge-sm">
-                                {getCategoryProgress(category.id)}%
+                {categories.map((category) => {
+                    const categoryId = category._id.toString();
+                    return (
+                        <a 
+                            key={category._id}
+                            className={`tab tab-lg ${activeCategory === categoryId ? 'tab-active' : ''}`}
+                            onClick={() => setActiveCategory(categoryId)}
+                        >
+                            <div className="flex items-center space-x-2">
+                                <span>{category.displayName}</span>
+                                <div className="badge badge-sm">
+                                    {getCategoryProgress(categoryId)}%
+                                </div>
                             </div>
-                        </div>
-                    </a>
-                ))}
+                        </a>
+                    );
+                })}
             </div>
 
             {/* Active Category Content */}
             <div className="card bg-base-100 shadow-xl">
                 <div className="card-body">
                     {categories.map((category) => {
-                        if (category.id !== activeCategory) return null;
+                        const categoryId = category._id.toString();
+                        if (categoryId !== activeCategory) return null;
                         
                         return (
-                            <div key={category.id}>
+                            <div key={category._id}>
                                 <div className="flex items-start justify-between mb-6">
                                     <div>
                                         <h3 className="text-xl font-bold mb-2" style={{ color: category.color }}>
@@ -288,7 +311,7 @@ const TasksTab = ({ user, cachedData, isLoading, onProgressUpdate, onRefresh, on
                                     </div>
                                     <div className="text-right">
                                         <div className="text-2xl font-bold" style={{ color: category.color }}>
-                                            {getCategoryProgress(category.id)}%
+                                            {getCategoryProgress(categoryId)}%
                                         </div>
                                         <div className="text-sm text-base-content/70">Complete</div>
                                     </div>
@@ -297,7 +320,7 @@ const TasksTab = ({ user, cachedData, isLoading, onProgressUpdate, onRefresh, on
                                 {/* Tasks List */}
                                 <div className="space-y-3">
                                     {(() => {
-                                        const categoryTasks = tasks[category.id];
+                                        const categoryTasks = tasks[categoryId];
                                         
                                         if (!categoryTasks || categoryTasks.length === 0) {
                                             return (
@@ -309,16 +332,16 @@ const TasksTab = ({ user, cachedData, isLoading, onProgressUpdate, onRefresh, on
                                         
                                         return categoryTasks.map((task) => {
                                             return (
-                                        <div key={task.id} className="flex gap-3 items-start">
+                                        <div key={task._id} className="flex gap-3 items-start">
                                             {/* Checkbox outside accordion */}
                                             <div className="form-control pt-4">
                                                 <label className="cursor-pointer">
                                                     <input 
                                                         type="checkbox" 
                                                         className="checkbox checkbox-primary"
-                                                        checked={isTaskCompleted(task.id)}
+                                                        checked={isTaskCompleted(task._id)}
                                                         onChange={(e) => {
-                                                            handleTaskToggle(task.id, e.target.checked);
+                                                            handleTaskToggle(task._id, e.target.checked);
                                                         }}
                                                     />
                                                 </label>
@@ -328,14 +351,14 @@ const TasksTab = ({ user, cachedData, isLoading, onProgressUpdate, onRefresh, on
                                             <div className="collapse collapse-arrow bg-base-200 flex-1">
                                             <input 
                                                 type="checkbox" 
-                                                checked={expandedTasks[task.id] || false}
-                                                onChange={() => toggleTaskExpansion(task.id)}
+                                                checked={expandedTasks[task._id] || false}
+                                                onChange={() => toggleTaskExpansion(task._id)}
                                             />
                                             <div className="collapse-title">
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center space-x-3">
                                                         <div>
-                                                            <h4 className={`font-semibold ${isTaskCompleted(task.id) ? 'line-through text-base-content/50' : ''}`}>
+                                                            <h4 className={`font-semibold ${isTaskCompleted(task._id) ? 'line-through text-base-content/50' : ''}`}>
                                                                 {task.title}
                                                             </h4>
                                                             <div className="flex items-center space-x-2 mt-1">
@@ -351,7 +374,7 @@ const TasksTab = ({ user, cachedData, isLoading, onProgressUpdate, onRefresh, on
                                                                 }`}>
                                                                     {task.difficulty}
                                                                 </span>
-                                                                {isTaskCompleted(task.id) && (
+                                                                {isTaskCompleted(task._id) && (
                                                                     <span className="badge badge-sm badge-primary">
                                                                         Completed
                                                                     </span>

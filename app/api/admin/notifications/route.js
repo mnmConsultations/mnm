@@ -18,6 +18,7 @@ import connectDB from '../../../../lib/utils/db';
 import { verifyAdminAuth } from '../../../../lib/middleware/adminAuth';
 import Notification from '../../../../lib/models/notification.model';
 import User from '../../../../lib/models/user.model';
+import { sanitizeUrl, sanitizeString } from '../../../../lib/utils/sanitize';
 
 /**
  * Send Custom Notification
@@ -63,18 +64,42 @@ export async function POST(req) {
       );
     }
     
-    if (title.length > 100) {
+    // Sanitize inputs
+    const sanitizedTitle = sanitizeString(title, 100);
+    const sanitizedMessage = sanitizeString(message, 500);
+    
+    if (sanitizedTitle.length > 100) {
       return NextResponse.json(
         { success: false, error: 'Title must be 100 characters or less' },
         { status: 400 }
       );
     }
     
-    if (message.length > 500) {
+    if (sanitizedMessage.length > 500) {
       return NextResponse.json(
         { success: false, error: 'Message must be 500 characters or less' },
         { status: 400 }
       );
+    }
+    
+    // SECURITY FIX: Validate actionUrl to prevent open redirects
+    let validatedActionUrl = undefined;
+    if (actionUrl) {
+      // Allow only internal URLs (relative paths) or specific whitelisted domains
+      const allowedDomains = [
+        process.env.NEXT_PUBLIC_APP_URL?.replace(/https?:\/\//, ''),
+        'localhost',
+        '127.0.0.1'
+      ].filter(Boolean);
+      
+      validatedActionUrl = sanitizeUrl(actionUrl, allowedDomains);
+      
+      if (!validatedActionUrl) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid or unauthorized action URL' },
+          { status: 400 }
+        );
+      }
     }
     
     const validTypes = ['info', 'success', 'warning', 'error', 'update'];
@@ -123,11 +148,11 @@ export async function POST(req) {
     // Create notifications for all target users
     const notifications = users.map(user => ({
       userId: user._id,
-      title,
-      message,
+      title: sanitizedTitle,
+      message: sanitizedMessage,
       type,
       priority,
-      actionUrl: actionUrl || undefined,
+      actionUrl: validatedActionUrl,
       metadata: {
         entityType: 'custom',
         action: 'admin_message',

@@ -51,35 +51,79 @@
 import { Resend } from 'resend';
 import { NextResponse } from 'next/server';
 import { EmailTemplate} from '../../../components/email-template.jsx';
+import { checkRateLimit, getClientIp, RateLimitPresets } from '../../../lib/middleware/rateLimit';
+import { sanitizeString, sanitizeEmail } from '../../../lib/utils/sanitize';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request) {
   try {
+    // Rate limiting by IP - prevent spam
+    const clientIp = getClientIp(request);
+    const rateLimitCheck = checkRateLimit(
+      `contact:${clientIp}`, 
+      RateLimitPresets.CONTACT.maxRequests,
+      RateLimitPresets.CONTACT.windowMs
+    );
+    
+    if (!rateLimitCheck.allowed) {
+      return NextResponse.json(
+        { 
+          error: `Too many contact form submissions. Please try again in ${Math.ceil(rateLimitCheck.retryAfter / 60)} minutes.` 
+        },
+        { 
+          status: 429,
+          headers: { 'Retry-After': rateLimitCheck.retryAfter.toString() }
+        }
+      );
+    }
+    
     const content = await request.json();
+    
+    // Sanitize inputs
+    const name = sanitizeString(content.name, 100);
+    const email = sanitizeEmail(content.email);
+    const phone = sanitizeString(content.phone, 20);
+    const subject = sanitizeString(content.subject, 200);
+    const message = sanitizeString(content.message, 5000);
 
     // Basic server-side validation
-    if (!content.name || !content.email || !content.phone || !content.subject || !content.message) {
+    if (!name || !email || !phone || !subject || !message) {
        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
-    if (!/\S+@\S+\.\S+/.test(content.email)) {
+    
+    // Enhanced email validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
     }
-    // Add more validation as needed
+    
+    // Validate message length
+    if (message.length < 10) {
+      return NextResponse.json({ error: 'Message is too short' }, { status: 400 });
+    }
+    
+    // Additional rate limit by email
+    const emailRateLimit = checkRateLimit(`contact-email:${email}`, 2, 60 * 60 * 1000);
+    if (!emailRateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'Too many submissions from this email address. Please try again later.' },
+        { status: 429 }
+      );
+    }
 
     const { data, error } = await resend.emails.send({
       // Use a verified sender email address. Using the user's email directly
       // in 'from' can lead to delivery issues or be blocked.
       from: `Enquiry! <onboarding@resend.dev>`, // CHANGE THIS to your verified Resend sender
       to: ['mnmconsultations@gmail.com'], // Your receiving email address
-      subject: `Enquiry from ${content.name}: ${content.subject}`,
-      react: EmailTemplate(content), // Pass the name to the EmailTemplate component
+      subject: `Enquiry from ${name}: ${subject}`,
+      react: EmailTemplate({ name, email, phone, subject, message }), // Pass sanitized content
     });
 
     if (error) {
       console.error('Resend API Error:', error);
       // Avoid sending detailed error info back to the client
-      return NextResponse.json({ error: 'Failed to send email due to server error.' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to send email. Please try again later.' }, { status: 500 });
     }
 
     console.log('Resend API Success:', data);
@@ -87,6 +131,6 @@ export async function POST(request) {
 
   } catch (err) {
     console.error('API Route Error:', err);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: 'An error occurred. Please try again later.' }, { status: 500 });
   }
 }
