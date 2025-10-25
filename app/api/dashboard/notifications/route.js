@@ -87,43 +87,64 @@ export async function GET(request) {
     user = await checkAndUpdatePackageExpiry(user);
 
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get('limit')) || 10;
+    const limit = parseInt(searchParams.get('limit')) || 15;
+    const offset = parseInt(searchParams.get('offset')) || 0;
     const unreadOnly = searchParams.get('unreadOnly') === 'true';
 
     await connectDB();
     
     const query = { userId: user._id };
+    
+    // Don't filter by isRead if unreadOnly is false - we want all notifications
+    // But we'll mark unread status based on lastNotificationReadAt
     if (unreadOnly) {
-      query.isRead = false;
+      // Only show notifications created after last read time
+      if (user.lastNotificationReadAt) {
+        query.createdAt = { $gt: user.lastNotificationReadAt };
+      } else {
+        // If never read, all notifications are unread
+        query.isRead = false;
+      }
     }
 
-    // Add expiration filter
-    const now = new Date();
-    query.$or = [
-      { expiresAt: { $exists: false } },
-      { expiresAt: null },
-      { expiresAt: { $gt: now } }
-    ];
+    // Note: TTL index automatically removes documents after 7 days
+    // No need to filter by expiresAt since MongoDB handles it
+    
+    // Get total count for pagination
+    const totalCount = await Notification.countDocuments(query);
     
     const notifications = await Notification.find(query)
       .sort({ createdAt: -1 })
+      .skip(offset)
       .limit(limit);
 
+    // Mark notifications as read based on lastNotificationReadAt
+    const now = new Date();
+    const lastReadAt = user.lastNotificationReadAt || new Date(0);
+    
+    const notificationsWithReadStatus = notifications.map(notif => ({
+      ...notif.toObject(),
+      isRead: notif.createdAt <= lastReadAt,
+    }));
+
+    // Count unread notifications (created after lastNotificationReadAt)
     const unreadCount = await Notification.countDocuments({
       userId: user._id,
-      isRead: false,
-      $or: [
-        { expiresAt: { $exists: false } },
-        { expiresAt: null },
-        { expiresAt: { $gt: now } }
-      ]
+      createdAt: { $gt: lastReadAt }
+    });
+
+    // Update lastNotificationReadAt to current time (mark all as read up to now)
+    await User.findByIdAndUpdate(user._id, {
+      lastNotificationReadAt: now
     });
 
     return NextResponse.json({
       success: true,
       data: {
-        notifications,
-        unreadCount
+        notifications: notificationsWithReadStatus,
+        unreadCount,
+        totalCount,
+        lastReadAt: now,
       }
     });
 
@@ -178,55 +199,6 @@ export async function POST(request) {
 
   } catch (error) {
     console.error('Error creating notification:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function PATCH(request) {
-  try {
-    let user = await getUserFromToken(request);
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Check and update package expiry (only for users, not admins)
-    user = await checkAndUpdatePackageExpiry(user);
-
-    const body = await request.json();
-    const { notificationId, isRead } = body;
-
-    if (!notificationId) {
-      return NextResponse.json(
-        { error: 'Notification ID is required' },
-        { status: 400 }
-      );
-    }
-
-    await connectDB();
-    
-    const notification = await Notification.findOneAndUpdate(
-      { _id: notificationId, userId: user._id },
-      { isRead: isRead !== undefined ? isRead : true },
-      { new: true }
-    );
-
-    if (!notification) {
-      return NextResponse.json(
-        { error: 'Notification not found' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: notification
-    });
-
-  } catch (error) {
-    console.error('Error updating notification:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

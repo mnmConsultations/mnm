@@ -19,6 +19,7 @@ import connectDB from '../../../../lib/utils/db';
 import { verifyAdminAuth } from '../../../../lib/middleware/adminAuth';
 import Task from '../../../../lib/models/task.model';
 import Category from '../../../../lib/models/category.model';
+import { notifyEntityChange } from '../../../../lib/services/notification.service';
 
 /**
  * Get All Tasks or Tasks by Category
@@ -90,6 +91,7 @@ export async function POST(req) {
       estimatedDuration, 
       difficulty,
       externalLinks,
+      helpfulLinks,
       tips,
       requirements,
     } = body;
@@ -113,6 +115,56 @@ export async function POST(req) {
         { success: false, error: 'Description must be 800 characters or less' },
         { status: 400 }
       );
+    }
+    
+    // Validate estimatedDuration enum if provided
+    const validDurations = [
+      '15-30 minutes',
+      '30-60 minutes',
+      '1-2 hours',
+      '2-4 hours',
+      'Half day',
+      'Full day',
+      '2-3 days',
+      '1 week',
+      '2-4 weeks',
+      '1-2 months'
+    ];
+    if (estimatedDuration && !validDurations.includes(estimatedDuration)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid estimated duration' },
+        { status: 400 }
+      );
+    }
+    
+    // Validate helpfulLinks format if provided
+    if (helpfulLinks && Array.isArray(helpfulLinks)) {
+      for (const link of helpfulLinks) {
+        if (!link.title || !link.url) {
+          return NextResponse.json(
+            { success: false, error: 'Each helpful link must have a title and URL' },
+            { status: 400 }
+          );
+        }
+        if (link.title.length > 100) {
+          return NextResponse.json(
+            { success: false, error: 'Link title must be 100 characters or less' },
+            { status: 400 }
+          );
+        }
+        if (link.url.length > 500) {
+          return NextResponse.json(
+            { success: false, error: 'Link URL must be 500 characters or less' },
+            { status: 400 }
+          );
+        }
+        if (link.description && link.description.length > 200) {
+          return NextResponse.json(
+            { success: false, error: 'Link description must be 200 characters or less' },
+            { status: 400 }
+          );
+        }
+      }
     }
     
     const categoryExists = await Category.findOne({ id: category });
@@ -157,8 +209,17 @@ export async function POST(req) {
       estimatedDuration: estimatedDuration || '',
       difficulty: difficulty || 'medium',
       externalLinks: externalLinks || [],
+      helpfulLinks: helpfulLinks || [],
       tips: tips || [],
       requirements: requirements || [],
+    });
+    
+    // Notify users about new task
+    await notifyEntityChange({
+      entityType: 'task',
+      entityId: task.id,
+      action: 'created',
+      entityName: task.title,
     });
     
     return NextResponse.json({

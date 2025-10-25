@@ -256,6 +256,7 @@ const AdminContentTab = () => {
       estimatedDuration: '',
       difficulty: 'medium',
       externalLinks: [],
+      helpfulLinks: [],
       tips: [],
       requirements: [],
     });
@@ -810,16 +811,23 @@ const AdminContentTab = () => {
                 <label className="label">
                   <span className="label-text">Estimated Time Frame</span>
                 </label>
-                <input
-                  type="text"
-                  className="input input-bordered"
-                  placeholder="e.g., 2-3 months before arrival"
+                <select
+                  className="select select-bordered"
                   value={editingCategory.estimatedTimeFrame}
                   onChange={(e) => setEditingCategory({
                     ...editingCategory,
                     estimatedTimeFrame: e.target.value
                   })}
-                />
+                >
+                  <option value="">Select time frame</option>
+                  <option value="Before departure">Before departure</option>
+                  <option value="First week">First week</option>
+                  <option value="First month">First month</option>
+                  <option value="1-3 months">1-3 months</option>
+                  <option value="3-6 months">3-6 months</option>
+                  <option value="6+ months">6+ months</option>
+                  <option value="Ongoing">Ongoing</option>
+                </select>
               </div>
             </div>
 
@@ -945,16 +953,26 @@ const AdminContentTab = () => {
                 <label className="label">
                   <span className="label-text">Estimated Duration</span>
                 </label>
-                <input
-                  type="text"
-                  className="input input-bordered"
-                  placeholder="e.g., 2-3 days, 1 week"
+                <select
+                  className="select select-bordered"
                   value={editingTask.estimatedDuration}
                   onChange={(e) => setEditingTask({
                     ...editingTask,
                     estimatedDuration: e.target.value
                   })}
-                />
+                >
+                  <option value="">Select duration</option>
+                  <option value="15-30 minutes">15-30 minutes</option>
+                  <option value="30-60 minutes">30-60 minutes</option>
+                  <option value="1-2 hours">1-2 hours</option>
+                  <option value="2-4 hours">2-4 hours</option>
+                  <option value="Half day">Half day</option>
+                  <option value="Full day">Full day</option>
+                  <option value="2-3 days">2-3 days</option>
+                  <option value="1 week">1 week</option>
+                  <option value="2-4 weeks">2-4 weeks</option>
+                  <option value="1-2 months">1-2 months</option>
+                </select>
               </div>
 
               <div className="form-control">
@@ -987,6 +1005,204 @@ const AdminContentTab = () => {
                     requirements: e.target.value.split('\n').filter(r => r.trim())
                   })}
                 />
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-semibold">External Links (Legacy)</span>
+                </label>
+                {editingTask.externalLinks?.map((link, index) => (
+                  <div key={index} className="card bg-base-200 p-4 mb-3">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-medium">Link {index + 1}</span>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-error"
+                        onClick={() => {
+                          const newLinks = [...editingTask.externalLinks];
+                          newLinks.splice(index, 1);
+                          setEditingTask({
+                            ...editingTask,
+                            externalLinks: newLinks
+                          });
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <div className="form-control mb-2">
+                      <label className="label py-1">
+                        <span className="label-text-alt">Title</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="input input-bordered input-sm"
+                        placeholder="e.g., Official Guide"
+                        maxLength={100}
+                        value={link.title || ''}
+                        onChange={(e) => {
+                          const newLinks = [...editingTask.externalLinks];
+                          newLinks[index] = { ...newLinks[index], title: e.target.value };
+                          setEditingTask({
+                            ...editingTask,
+                            externalLinks: newLinks
+                          });
+                        }}
+                      />
+                    </div>
+                    <div className="form-control mb-2">
+                      <label className="label py-1">
+                        <span className="label-text-alt">URL</span>
+                      </label>
+                      <input
+                        type="url"
+                        className="input input-bordered input-sm"
+                        placeholder="https://example.com"
+                        maxLength={500}
+                        value={link.url || ''}
+                        onChange={(e) => {
+                          const newLinks = [...editingTask.externalLinks];
+                          newLinks[index] = { ...newLinks[index], url: e.target.value };
+                          setEditingTask({
+                            ...editingTask,
+                            externalLinks: newLinks
+                          });
+                        }}
+                      />
+                    </div>
+                    <div className="form-control">
+                      <label className="label py-1">
+                        <span className="label-text-alt">Description (optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="input input-bordered input-sm"
+                        placeholder="Brief description of the resource"
+                        maxLength={200}
+                        value={link.description || ''}
+                        onChange={(e) => {
+                          const newLinks = [...editingTask.externalLinks];
+                          newLinks[index] = { ...newLinks[index], description: e.target.value };
+                          setEditingTask({
+                            ...editingTask,
+                            externalLinks: newLinks
+                          });
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline mt-2"
+                  onClick={() => {
+                    setEditingTask({
+                      ...editingTask,
+                      externalLinks: [...(editingTask.externalLinks || []), { title: '', url: '', description: '' }]
+                    });
+                  }}
+                >
+                  + Add External Link
+                </button>
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-semibold">Helpful Links</span>
+                </label>
+                {editingTask.helpfulLinks?.map((link, index) => (
+                  <div key={index} className="card bg-base-200 p-4 mb-3">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-medium">Link {index + 1}</span>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-error"
+                        onClick={() => {
+                          const newLinks = [...editingTask.helpfulLinks];
+                          newLinks.splice(index, 1);
+                          setEditingTask({
+                            ...editingTask,
+                            helpfulLinks: newLinks
+                          });
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <div className="form-control mb-2">
+                      <label className="label py-1">
+                        <span className="label-text-alt">Title</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="input input-bordered input-sm"
+                        placeholder="e.g., Official Guide"
+                        maxLength={100}
+                        value={link.title || ''}
+                        onChange={(e) => {
+                          const newLinks = [...editingTask.helpfulLinks];
+                          newLinks[index] = { ...newLinks[index], title: e.target.value };
+                          setEditingTask({
+                            ...editingTask,
+                            helpfulLinks: newLinks
+                          });
+                        }}
+                      />
+                    </div>
+                    <div className="form-control mb-2">
+                      <label className="label py-1">
+                        <span className="label-text-alt">URL</span>
+                      </label>
+                      <input
+                        type="url"
+                        className="input input-bordered input-sm"
+                        placeholder="https://example.com"
+                        maxLength={500}
+                        value={link.url || ''}
+                        onChange={(e) => {
+                          const newLinks = [...editingTask.helpfulLinks];
+                          newLinks[index] = { ...newLinks[index], url: e.target.value };
+                          setEditingTask({
+                            ...editingTask,
+                            helpfulLinks: newLinks
+                          });
+                        }}
+                      />
+                    </div>
+                    <div className="form-control">
+                      <label className="label py-1">
+                        <span className="label-text-alt">Description (optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="input input-bordered input-sm"
+                        placeholder="Brief description of the resource"
+                        maxLength={200}
+                        value={link.description || ''}
+                        onChange={(e) => {
+                          const newLinks = [...editingTask.helpfulLinks];
+                          newLinks[index] = { ...newLinks[index], description: e.target.value };
+                          setEditingTask({
+                            ...editingTask,
+                            helpfulLinks: newLinks
+                          });
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline mt-2"
+                  onClick={() => {
+                    setEditingTask({
+                      ...editingTask,
+                      helpfulLinks: [...(editingTask.helpfulLinks || []), { title: '', url: '', description: '' }]
+                    });
+                  }}
+                >
+                  + Add Helpful Link
+                </button>
               </div>
             </div>
 

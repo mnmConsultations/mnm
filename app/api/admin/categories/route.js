@@ -18,6 +18,7 @@ import { NextResponse } from 'next/server';
 import connectDB from '../../../../lib/utils/db';
 import { verifyAdminAuth } from '../../../../lib/middleware/adminAuth';
 import Category from '../../../../lib/models/category.model';
+import { notifyEntityChange } from '../../../../lib/services/notification.service';
 
 /**
  * Get All Categories
@@ -83,6 +84,23 @@ export async function POST(req) {
       );
     }
     
+    // Validate estimatedTimeFrame enum if provided
+    const validTimeFrames = [
+      'Before departure',
+      'First week',
+      'First month',
+      '1-3 months',
+      '3-6 months',
+      '6+ months',
+      'Ongoing'
+    ];
+    if (estimatedTimeFrame && !validTimeFrames.includes(estimatedTimeFrame)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid estimated time frame' },
+        { status: 400 }
+      );
+    }
+    
     const categoryCount = await Category.countDocuments();
     if (categoryCount >= 6) {
       return NextResponse.json(
@@ -117,6 +135,14 @@ export async function POST(req) {
       color: color || '#3B82F6',
       order,
       estimatedTimeFrame: estimatedTimeFrame || '',
+    });
+    
+    // Notify users about new category
+    await notifyEntityChange({
+      entityType: 'category',
+      entityId: category.id,
+      action: 'created',
+      entityName: category.displayName,
     });
     
     return NextResponse.json({

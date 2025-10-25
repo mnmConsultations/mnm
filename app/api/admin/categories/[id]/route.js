@@ -17,6 +17,7 @@ import connectDB from '../../../../../lib/utils/db';
 import { verifyAdminAuth } from '../../../../../lib/middleware/adminAuth';
 import Category from '../../../../../lib/models/category.model';
 import Task from '../../../../../lib/models/task.model';
+import { notifyEntityChange } from '../../../../../lib/services/notification.service';
 
 /**
  * Get Single Category
@@ -93,6 +94,31 @@ export async function PATCH(req, { params }) {
       );
     }
     
+    // Track changes for notification
+    const changes = [];
+    if (displayName !== undefined && displayName !== category.displayName) changes.push('name');
+    if (description !== undefined && description !== category.description) changes.push('description');
+    if (icon !== undefined && icon !== category.icon) changes.push('icon');
+    if (color !== undefined && color !== category.color) changes.push('color');
+    if (estimatedTimeFrame !== undefined && estimatedTimeFrame !== category.estimatedTimeFrame) changes.push('timeframe');
+    
+    // Validate estimatedTimeFrame enum if provided
+    const validTimeFrames = [
+      'Before departure',
+      'First week',
+      'First month',
+      '1-3 months',
+      '3-6 months',
+      '6+ months',
+      'Ongoing'
+    ];
+    if (estimatedTimeFrame !== undefined && estimatedTimeFrame && !validTimeFrames.includes(estimatedTimeFrame)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid estimated time frame' },
+        { status: 400 }
+      );
+    }
+    
     if (displayName !== undefined) {
       if (!displayName || displayName.length > 50) {
         return NextResponse.json(
@@ -134,6 +160,17 @@ export async function PATCH(req, { params }) {
           estimatedTimeFrame: estimatedTimeFrame !== undefined ? estimatedTimeFrame : category.estimatedTimeFrame,
         });
         
+        // Notify users about category update (with ID change)
+        if (changes.length > 0) {
+          await notifyEntityChange({
+            entityType: 'category',
+            entityId: newId,
+            action: 'updated',
+            entityName: displayName,
+            changes,
+          });
+        }
+        
         return NextResponse.json({
           success: true,
           category: updatedCategory,
@@ -157,6 +194,17 @@ export async function PATCH(req, { params }) {
       updateData,
       { new: true }
     );
+    
+    // Notify users about category update
+    if (changes.length > 0) {
+      await notifyEntityChange({
+        entityType: 'category',
+        entityId: categoryId,
+        action: 'updated',
+        entityName: updatedCategory.displayName,
+        changes,
+      });
+    }
     
     return NextResponse.json({
       success: true,
@@ -219,7 +267,18 @@ export async function DELETE(req, { params }) {
       );
     }
     
+    // Store category name before deletion for notification
+    const categoryName = category.displayName;
+    
     await Category.deleteOne({ id: categoryId });
+    
+    // Notify users about category deletion
+    await notifyEntityChange({
+      entityType: 'category',
+      entityId: categoryId,
+      action: 'deleted',
+      entityName: categoryName,
+    });
     
     return NextResponse.json({
       success: true,

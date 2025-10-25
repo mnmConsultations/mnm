@@ -8,7 +8,7 @@
  * - Overall relocation progress display
  * - Per-category progress breakdown (4 categories)
  * - User profile card with package information and expiry status
- * - Notifications center with filtering
+ * - Real-time notifications center with pagination (15 per page)
  * - Quick actions section
  * 
  * Layout:
@@ -30,36 +30,78 @@
  * - Package expiry date and status (Active/Expired)
  * - Edit profile button
  * 
- * Package Info Card:
- * - Shows current plan (Free/Essential/Premium)
- * - Displays activation and expiry dates
- * - Color-coded badge by package type
- * - Upgrade call-to-action for free users
- * 
  * Notifications Center:
- * - All/Unread filtering tabs
+ * - Auto-generated notifications from admin actions (task/category changes)
+ * - Custom notifications from admin
+ * - Read/unread status based on lastNotificationReadAt
+ * - Pagination (15 notifications per page)
+ * - 7-day TTL (auto-expire after 7 days)
+ * - Smart grouping (multiple edits merged into single notification)
  * - Priority-based display order
- * - Mark as read functionality
  * - Action links for actionable notifications
  * - Empty state for no notifications
  * 
  * Props:
  * @param {object} user - Current logged-in user
- * @param {object} cachedData - Pre-fetched progress and notifications
+ * @param {object} cachedData - Pre-fetched progress (notifications fetched separately)
  * @param {boolean} isLoading - Loading state
  * @param {function} onRefresh - Callback to refresh data
  * 
  * Caching:
- * - Uses parent's cached data (no API calls on mount)
- * - Efficient re-renders on tab switch
+ * - Uses parent's cached data for progress
+ * - Fetches notifications independently with pagination
  */
 'use client';
 
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 
 const HomeTab = ({ user, cachedData, isLoading, onRefresh }) => {
     const userProgress = cachedData?.userProgress;
-    const notifications = cachedData?.notifications || [];
+    const [notifications, setNotifications] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalNotifications, setTotalNotifications] = useState(0);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
+    const notificationsPerPage = 15;
+
+    useEffect(() => {
+        fetchNotifications(1);
+    }, []);
+
+    const fetchNotifications = async (page = 1) => {
+        try {
+            setIsLoadingNotifications(true);
+            const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            
+            const offset = (page - 1) * notificationsPerPage;
+            const response = await fetch(
+                `/api/dashboard/notifications?limit=${notificationsPerPage}&offset=${offset}`,
+                { headers }
+            );
+            
+            if (response.ok) {
+                const data = await response.json();
+                setNotifications(data.data.notifications || []);
+                setUnreadCount(data.data.unreadCount || 0);
+                setTotalNotifications(data.data.totalCount || 0);
+                setCurrentPage(page);
+            }
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
+        } finally {
+            setIsLoadingNotifications(false);
+        }
+    };
+
+    const totalPages = Math.ceil(totalNotifications / notificationsPerPage);
+
+    const handlePageChange = (newPage) => {
+        if (newPage >= 1 && newPage <= totalPages) {
+            fetchNotifications(newPage);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -166,58 +208,141 @@ const HomeTab = ({ user, cachedData, isLoading, onRefresh }) => {
                 {/* Notifications and Updates Section */}
                 <div className="card bg-base-100 shadow-xl">
                     <div className="card-body">
-                        <h2 className="card-title text-lg lg:text-xl mb-4">
-                            <svg className="w-5 h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-5 5v-5zM4 3h16a1 1 0 011 1v10a1 1 0 01-1 1H6l-4 4V4a1 1 0 011-1z" />
-                            </svg>
-                            Notifications & Updates
-                        </h2>
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="card-title text-lg lg:text-xl">
+                                <svg className="w-5 h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                </svg>
+                                Notifications & Updates
+                            </h2>
+                            {unreadCount > 0 && (
+                                <span className="badge badge-primary badge-lg">
+                                    {unreadCount} New
+                                </span>
+                            )}
+                        </div>
                         
-                        {notifications.length > 0 ? (
-                            <div className="space-y-3">
-                                {notifications.map((notification) => (
-                                    <div 
-                                        key={notification._id} 
-                                        className={`alert ${
-                                            notification.type === 'success' ? 'alert-success' :
-                                            notification.type === 'warning' ? 'alert-warning' :
-                                            notification.type === 'error' ? 'alert-error' :
-                                            'alert-info'
-                                        } ${!notification.isRead ? 'border-l-4 border-primary' : ''}`}
-                                    >
-                                        <div className="flex-1">
-                                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                                                <div className="flex-1">
-                                                    <h4 className="font-semibold text-sm lg:text-base">{notification.title}</h4>
-                                                    <p className="text-xs lg:text-sm opacity-90">{notification.message}</p>
-                                                    <p className="text-xs opacity-70 mt-1">
-                                                        {new Date(notification.createdAt).toLocaleDateString()}
-                                                    </p>
+                        {isLoadingNotifications ? (
+                            <div className="flex items-center justify-center py-12">
+                                <div className="loading loading-spinner loading-lg"></div>
+                            </div>
+                        ) : notifications.length > 0 ? (
+                            <>
+                                <div className="space-y-3">
+                                    {notifications.map((notification) => (
+                                        <div 
+                                            key={notification._id} 
+                                            className={`alert ${
+                                                notification.type === 'success' ? 'alert-success' :
+                                                notification.type === 'warning' ? 'alert-warning' :
+                                                notification.type === 'error' ? 'alert-error' :
+                                                notification.type === 'update' ? 'alert-info' :
+                                                'alert-info'
+                                            } ${!notification.isRead ? 'border-l-4 border-primary shadow-md' : 'opacity-80'}`}
+                                        >
+                                            <div className="flex-1">
+                                                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <h4 className="font-semibold text-sm lg:text-base">{notification.title}</h4>
+                                                            {!notification.isRead && (
+                                                                <div className="badge badge-primary badge-sm">New</div>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-xs lg:text-sm opacity-90">{notification.message}</p>
+                                                        <div className="flex items-center gap-2 mt-2">
+                                                            <p className="text-xs opacity-70">
+                                                                {new Date(notification.createdAt).toLocaleDateString('en-US', {
+                                                                    month: 'short',
+                                                                    day: 'numeric',
+                                                                    year: 'numeric',
+                                                                    hour: '2-digit',
+                                                                    minute: '2-digit'
+                                                                })}
+                                                            </p>
+                                                            {notification.priority === 'high' && (
+                                                                <span className="badge badge-error badge-xs">High Priority</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                {!notification.isRead && (
-                                                    <div className="badge badge-primary badge-sm">New</div>
+                                                {notification.actionUrl && (
+                                                    <div className="mt-2">
+                                                        <a 
+                                                            href={notification.actionUrl} 
+                                                            className="btn btn-sm btn-outline"
+                                                        >
+                                                            Take Action
+                                                        </a>
+                                                    </div>
                                                 )}
                                             </div>
-                                            {notification.actionUrl && (
-                                                <div className="mt-2">
-                                                    <a 
-                                                        href={notification.actionUrl} 
-                                                        className="btn btn-sm btn-outline"
-                                                    >
-                                                        Take Action
-                                                    </a>
-                                                </div>
-                                            )}
                                         </div>
-                                    </div>
-                                ))}
-                                
-                                <div className="text-center mt-4">
-                                    <button className="btn btn-ghost btn-sm">
-                                        View All Notifications
-                                    </button>
+                                    ))}
                                 </div>
-                            </div>
+                                
+                                {/* Pagination */}
+                                {totalPages > 1 && (
+                                    <div className="flex items-center justify-center gap-2 mt-6">
+                                        <button
+                                            className="btn btn-sm btn-outline"
+                                            onClick={() => handlePageChange(currentPage - 1)}
+                                            disabled={currentPage === 1}
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                                            </svg>
+                                            Previous
+                                        </button>
+                                        
+                                        <div className="flex items-center gap-1">
+                                            {[...Array(totalPages)].map((_, idx) => {
+                                                const page = idx + 1;
+                                                // Show first page, last page, current page, and pages around current
+                                                if (
+                                                    page === 1 ||
+                                                    page === totalPages ||
+                                                    (page >= currentPage - 1 && page <= currentPage + 1)
+                                                ) {
+                                                    return (
+                                                        <button
+                                                            key={page}
+                                                            className={`btn btn-sm ${
+                                                                currentPage === page ? 'btn-primary' : 'btn-ghost'
+                                                            }`}
+                                                            onClick={() => handlePageChange(page)}
+                                                        >
+                                                            {page}
+                                                        </button>
+                                                    );
+                                                } else if (
+                                                    page === currentPage - 2 ||
+                                                    page === currentPage + 2
+                                                ) {
+                                                    return <span key={page} className="px-2">...</span>;
+                                                }
+                                                return null;
+                                            })}
+                                        </div>
+                                        
+                                        <button
+                                            className="btn btn-sm btn-outline"
+                                            onClick={() => handlePageChange(currentPage + 1)}
+                                            disabled={currentPage === totalPages}
+                                        >
+                                            Next
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                )}
+                                
+                                <div className="text-center text-xs text-base-content/50 mt-4">
+                                    Showing {((currentPage - 1) * notificationsPerPage) + 1}-{Math.min(currentPage * notificationsPerPage, totalNotifications)} of {totalNotifications} notifications
+                                    <span className="ml-2">• Auto-delete after 7 days</span>
+                                </div>
+                            </>
                         ) : (
                             <div className="text-center py-8">
                                 <div className="flex flex-col items-center">

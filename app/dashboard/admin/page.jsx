@@ -56,6 +56,7 @@ import Link from 'next/link';
 import { useLoggedInUser, useSignOut } from '../../../lib/hooks/auth.hooks';
 import AdminHomeTab from '../../../components/dashboard/admin/AdminHomeTab';
 import AdminContentTab from '../../../components/dashboard/admin/AdminContentTab';
+import AdminNotificationForm from '../../../components/dashboard/admin/AdminNotificationForm';
 
 const AdminDashboard = () => {
     const router = useRouter();
@@ -147,11 +148,24 @@ const AdminDashboard = () => {
                     >
                         Content Management
                     </a>
+                    <a 
+                        className={`tab tab-lg ${activeTab === 'notifications' ? 'tab-active' : ''}`}
+                        onClick={() => setActiveTab('notifications')}
+                    >
+                        Send Notification
+                    </a>
                 </div>
 
                 {/* Tab Content */}
                 {activeTab === 'home' && <AdminHomeTab />}
                 {activeTab === 'content' && <AdminContentTab />}
+                {activeTab === 'notifications' && (
+                    <div className="card bg-base-100 shadow-xl">
+                        <div className="card-body">
+                            <AdminNotificationForm />
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

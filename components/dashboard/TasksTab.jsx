@@ -372,21 +372,52 @@ const TasksTab = ({ user, cachedData, isLoading, onProgressUpdate, onRefresh, on
                                                     {/* External Links */}
                                                     {task.externalLinks && task.externalLinks.length > 0 && (
                                                         <div>
-                                                            <h5 className="font-semibold mb-2">Helpful Links:</h5>
-                                                            <div className="space-y-2">
+                                                            <h5 className="font-semibold mb-2">📎 External Links:</h5>
+                                                            <div className="space-y-3">
                                                                 {task.externalLinks.map((link, index) => (
-                                                                    <a 
-                                                                        key={index}
-                                                                        href={link.url}
-                                                                        target="_blank"
-                                                                        rel="noopener noreferrer"
-                                                                        className="btn btn-sm btn-outline btn-primary"
-                                                                    >
-                                                                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                                                        </svg>
-                                                                        {link.title}
-                                                                    </a>
+                                                                    <div key={index} className="card bg-base-200 p-3">
+                                                                        <a 
+                                                                            href={link.url}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="btn btn-sm btn-primary mb-2"
+                                                                        >
+                                                                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                                            </svg>
+                                                                            {link.title}
+                                                                        </a>
+                                                                        {link.description && (
+                                                                            <p className="text-sm text-gray-600">{link.description}</p>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Helpful Links */}
+                                                    {task.helpfulLinks && task.helpfulLinks.length > 0 && (
+                                                        <div>
+                                                            <h5 className="font-semibold mb-2">🔗 Helpful Resources:</h5>
+                                                            <div className="space-y-3">
+                                                                {task.helpfulLinks.map((link, index) => (
+                                                                    <div key={index} className="card bg-base-200 p-3">
+                                                                        <a 
+                                                                            href={link.url}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="btn btn-sm btn-primary mb-2"
+                                                                        >
+                                                                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                                            </svg>
+                                                                            {link.title}
+                                                                        </a>
+                                                                        {link.description && (
+                                                                            <p className="text-sm text-gray-600">{link.description}</p>
+                                                                        )}
+                                                                    </div>
                                                                 ))}
                                                             </div>
                                                         </div>

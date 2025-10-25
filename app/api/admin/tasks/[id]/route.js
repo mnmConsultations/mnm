@@ -17,6 +17,7 @@ import connectDB from '../../../../../lib/utils/db';
 import { verifyAdminAuth } from '../../../../../lib/middleware/adminAuth';
 import Task from '../../../../../lib/models/task.model';
 import Category from '../../../../../lib/models/category.model';
+import { notifyEntityChange } from '../../../../../lib/services/notification.service';
 
 /**
  * Get Single Task
@@ -91,6 +92,7 @@ export async function PATCH(req, { params }) {
       estimatedDuration, 
       difficulty,
       externalLinks,
+      helpfulLinks,
       tips,
       requirements,
     } = body;
@@ -101,6 +103,68 @@ export async function PATCH(req, { params }) {
         { success: false, error: 'Task not found' },
         { status: 404 }
       );
+    }
+    
+    // Track changes for notification
+    const changes = [];
+    if (title !== undefined && title !== task.title) changes.push('title');
+    if (description !== undefined && description !== task.description) changes.push('description');
+    if (category !== undefined && category !== task.category) changes.push('category');
+    if (estimatedDuration !== undefined && estimatedDuration !== task.estimatedDuration) changes.push('duration');
+    if (difficulty !== undefined && difficulty !== task.difficulty) changes.push('difficulty');
+    if (externalLinks !== undefined) changes.push('links');
+    if (helpfulLinks !== undefined) changes.push('helpful links');
+    if (tips !== undefined) changes.push('tips');
+    if (requirements !== undefined) changes.push('requirements');
+    
+    // Validate estimatedDuration enum if provided
+    const validDurations = [
+      '15-30 minutes',
+      '30-60 minutes',
+      '1-2 hours',
+      '2-4 hours',
+      'Half day',
+      'Full day',
+      '2-3 days',
+      '1 week',
+      '2-4 weeks',
+      '1-2 months'
+    ];
+    if (estimatedDuration !== undefined && estimatedDuration && !validDurations.includes(estimatedDuration)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid estimated duration' },
+        { status: 400 }
+      );
+    }
+    
+    // Validate helpfulLinks format if provided
+    if (helpfulLinks && Array.isArray(helpfulLinks)) {
+      for (const link of helpfulLinks) {
+        if (!link.title || !link.url) {
+          return NextResponse.json(
+            { success: false, error: 'Each helpful link must have a title and URL' },
+            { status: 400 }
+          );
+        }
+        if (link.title.length > 100) {
+          return NextResponse.json(
+            { success: false, error: 'Link title must be 100 characters or less' },
+            { status: 400 }
+          );
+        }
+        if (link.url.length > 500) {
+          return NextResponse.json(
+            { success: false, error: 'Link URL must be 500 characters or less' },
+            { status: 400 }
+          );
+        }
+        if (link.description && link.description.length > 200) {
+          return NextResponse.json(
+            { success: false, error: 'Link description must be 200 characters or less' },
+            { status: 400 }
+          );
+        }
+      }
     }
     
     if (title !== undefined) {
@@ -137,11 +201,23 @@ export async function PATCH(req, { params }) {
           estimatedDuration: estimatedDuration !== undefined ? estimatedDuration : task.estimatedDuration,
           difficulty: difficulty !== undefined ? difficulty : task.difficulty,
           externalLinks: externalLinks !== undefined ? externalLinks : task.externalLinks,
+          helpfulLinks: helpfulLinks !== undefined ? helpfulLinks : task.helpfulLinks,
           tips: tips !== undefined ? tips : task.tips,
           requirements: requirements !== undefined ? requirements : task.requirements,
           isRequired: task.isRequired,
           isActive: task.isActive,
         });
+        
+        // Notify users about task update (with ID change)
+        if (changes.length > 0) {
+          await notifyEntityChange({
+            entityType: 'task',
+            entityId: newId,
+            action: 'updated',
+            entityName: title,
+            changes,
+          });
+        }
         
         return NextResponse.json({
           success: true,
@@ -188,6 +264,7 @@ export async function PATCH(req, { params }) {
     if (estimatedDuration !== undefined) updateData.estimatedDuration = estimatedDuration;
     if (difficulty !== undefined) updateData.difficulty = difficulty;
     if (externalLinks !== undefined) updateData.externalLinks = externalLinks;
+    if (helpfulLinks !== undefined) updateData.helpfulLinks = helpfulLinks;
     if (tips !== undefined) updateData.tips = tips;
     if (requirements !== undefined) updateData.requirements = requirements;
     
@@ -196,6 +273,17 @@ export async function PATCH(req, { params }) {
       updateData,
       { new: true }
     );
+    
+    // Notify users about task update
+    if (changes.length > 0) {
+      await notifyEntityChange({
+        entityType: 'task',
+        entityId: taskId,
+        action: 'updated',
+        entityName: updatedTask.title,
+        changes,
+      });
+    }
     
     return NextResponse.json({
       success: true,
@@ -245,7 +333,18 @@ export async function DELETE(req, { params }) {
       );
     }
     
+    // Store task title before deletion for notification
+    const taskTitle = task.title;
+    
     await Task.deleteOne({ id: taskId });
+    
+    // Notify users about task deletion
+    await notifyEntityChange({
+      entityType: 'task',
+      entityId: taskId,
+      action: 'deleted',
+      entityName: taskTitle,
+    });
     
     return NextResponse.json({
       success: true,
