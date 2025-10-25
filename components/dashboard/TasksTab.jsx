@@ -1,0 +1,489 @@
+/**
+ * Tasks Tab Component
+ * 
+ * User-facing task checklist with category navigation
+ * Displays relocation tasks organized by journey phase
+ * 
+ * Features:
+ * - Category-based task organization
+ * - Task completion tracking with checkboxes
+ * - Expandable task details (tips, requirements, links)
+ * - Progress calculation per category
+ * - Paywall protection for free users
+ * 
+ * Props:
+ * @param {object} user - Current logged-in user
+ * @param {object} cachedData - Pre-fetched tasks, categories, progress
+ * @param {boolean} isLoading - Loading state
+ * @param {function} onProgressUpdate - Callback to update parent cache
+ * @param {function} onRefresh - Callback to refresh data
+ * @param {function} onNavigateToContact - Callback to navigate to contact tab
+ * 
+ * Paywall Logic:
+ * - Free users see upgrade prompt
+ * - Shows Essential and Premium plan comparison
+ * - Links to packages page
+ * 
+ * Task Interaction:
+ * - Click checkbox to mark complete/incomplete
+ * - Updates UserProgress via PUT /api/dashboard/progress
+ * - Optimistic UI update through onProgressUpdate callback
+ * 
+ * Task Expansion:
+ * - Click task card to expand/collapse
+ * - Shows full description, tips, requirements, external links
+ * - Difficulty and duration badges
+ * 
+ * Progress Display:
+ * - Per-category progress bars
+ * - Visual feedback for completion status
+ * 
+ * Caching Pattern:
+ * - Uses parent's cached data
+ * - Updates cache via callback (no local API calls on mount)
+ * - Preserves state during tab switches
+ */
+'use client';
+
+import { useState, useEffect } from 'react';
+
+const TasksTab = ({ user, cachedData, isLoading, onProgressUpdate, onRefresh, onNavigateToContact }) => {
+    const categories = cachedData?.categories || [];
+    const tasks = cachedData?.tasks || {};
+    const userProgress = cachedData?.userProgress;
+    const requiresPaidPlan = cachedData?.requiresPaidPlan || false;
+    
+    // Set initial active category to first category's _id (not hardcoded string)
+    const [activeCategory, setActiveCategory] = useState(
+        categories.length > 0 ? categories[0]._id.toString() : null
+    );
+    const [expandedTasks, setExpandedTasks] = useState({});
+
+    // Update activeCategory when categories load
+    useEffect(() => {
+        if (categories.length > 0 && !activeCategory) {
+            setActiveCategory(categories[0]._id.toString());
+        }
+    }, [categories, activeCategory]);
+
+    const handleTaskToggle = async (taskId, completed) => {
+        try {
+            // Get token from localStorage
+            const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+            const headers = {
+                'Content-Type': 'application/json',
+                ...(token && { 'Authorization': `Bearer ${token}` })
+            };
+            
+            const response = await fetch('/api/dashboard/progress', {
+                method: 'PUT',
+                headers,
+                body: JSON.stringify({ taskId, completed }),
+            });
+
+            if (response.ok) {
+                const updatedProgress = await response.json();
+                // Update parent cache instead of local state
+                onProgressUpdate(updatedProgress.data);
+            }
+        } catch (error) {
+            console.error('Error updating task progress:', error);
+        }
+    };
+
+    const toggleTaskExpansion = (taskId) => {
+        setExpandedTasks(prev => ({
+            ...prev,
+            [taskId]: !prev[taskId]
+        }));
+    };
+
+    const isTaskCompleted = (taskId) => {
+        if (!userProgress?.completedTasks) return false;
+        return userProgress.completedTasks.some(task => {
+            const completedTaskId = task.taskId?.toString ? task.taskId.toString() : String(task.taskId);
+            const currentTaskId = taskId?.toString ? taskId.toString() : String(taskId);
+            return completedTaskId === currentTaskId;
+        });
+    };
+
+    const getCategoryProgress = (categoryId) => {
+        if (!tasks[categoryId] || !userProgress) return 0;
+        const categoryTasks = tasks[categoryId];
+        const completedTasks = categoryTasks.filter(task => 
+            userProgress.completedTasks?.some(completed => {
+                const completedTaskId = completed.taskId?.toString ? completed.taskId.toString() : String(completed.taskId);
+                const currentTaskId = task._id?.toString ? task._id.toString() : String(task._id);
+                return completedTaskId === currentTaskId;
+            })
+        );
+        return categoryTasks.length > 0 ? Math.round((completedTasks.length / categoryTasks.length) * 100) : 0;
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <div className="loading loading-spinner loading-lg"></div>
+            </div>
+        );
+    }
+
+    // Show paywall for free users
+    if (requiresPaidPlan) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <div className="card bg-base-100 shadow-2xl max-w-2xl">
+                    <div className="card-body text-center">
+                        <div className="flex justify-center mb-6">
+                            <svg className="w-24 h-24 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                        </div>
+                        <h2 className="card-title text-3xl justify-center mb-4">
+                            Upgrade to Access Tasks
+                        </h2>
+                        <p className="text-lg text-base-content/70 mb-6">
+                            Access to our comprehensive relocation task checklist is available only to our paid plan members.
+                        </p>
+                        
+                        <div className="alert alert-info mb-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span>Upgrade to Essential or Premium package to unlock all relocation tasks and features!</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div className="card bg-base-200 border-2 border-primary relative">
+                                <div className="badge badge-primary absolute top-2 right-2 z-10">Recommended</div>
+                                <div className="card-body">
+                                    <h3 className="font-bold text-xl mb-1">Essential Package</h3>
+                                    <p className="text-primary font-bold text-lg mb-2">₹25,000</p>
+                                    <p className="text-xs text-base-content/70 mb-3">Core services for a smooth transition</p>
+                                    <ul className="text-left space-y-2 text-sm">
+                                        <li className="flex items-start">
+                                            <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span>Online Q&A Session (1-hour)</span>
+                                        </li>
+                                        <li className="flex items-start">
+                                            <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span>WhatsApp Support Group (6 months)</span>
+                                        </li>
+                                        <li className="flex items-start">
+                                            <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span>Berlin Relocation Blueprint (10-part videos)</span>
+                                        </li>
+                                        <li className="flex items-start">
+                                            <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span>Pre-Departure Starter Kit</span>
+                                        </li>
+                                        <li className="flex items-start">
+                                            <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span>Orientation Bootcamp (2-day)</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div className="card bg-base-200">
+                                <div className="card-body">
+                                    <h3 className="font-bold text-xl mb-1">Premium Package</h3>
+                                    <p className="text-primary font-bold text-lg mb-2">₹40,000</p>
+                                    <p className="text-xs text-base-content/70 mb-3">Comprehensive worry-free support</p>
+                                    <ul className="text-left space-y-2 text-sm">
+                                        <li className="flex items-start">
+                                            <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span>Everything in Essential</span>
+                                        </li>
+                                        <li className="flex items-start">
+                                            <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span>Airport Pickup Service</span>
+                                        </li>
+                                        <li className="flex items-start">
+                                            <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span>Indian Welcome Package</span>
+                                        </li>
+                                        <li className="flex items-start">
+                                            <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span>10-Day Post-Arrival Support</span>
+                                        </li>
+                                        <li className="flex items-start">
+                                            <svg className="w-4 h-4 text-success mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span>Buddy Program & Safety Workshop</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+    
+    return (
+        <div className="space-y-6">
+            {/* Progress Overview */}
+            <div className="card bg-base-100 shadow-xl">
+                <div className="card-body">
+                    <h2 className="card-title text-2xl mb-4">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        </svg>
+                        Task Progress Overview
+                    </h2>
+                    
+                    <div className="flex justify-between items-center mb-4">
+                        <span className="text-lg font-semibold">Overall Completion</span>
+                        <span className="text-lg font-bold text-primary">
+                            {userProgress?.overallProgress || 0}%
+                        </span>
+                    </div>
+                    <progress 
+                        className="progress progress-primary w-full h-4" 
+                        value={userProgress?.overallProgress || 0} 
+                        max="100"
+                    ></progress>
+                </div>
+            </div>
+
+            {/* Category Tabs */}
+            <div className="tabs tabs-boxed bg-base-100 p-1">
+                {categories.map((category) => {
+                    const categoryId = category._id.toString();
+                    return (
+                        <a 
+                            key={category._id}
+                            className={`tab tab-lg ${activeCategory === categoryId ? 'tab-active' : ''}`}
+                            onClick={() => setActiveCategory(categoryId)}
+                        >
+                            <div className="flex items-center space-x-2">
+                                <span>{category.displayName}</span>
+                                <div className="badge badge-sm">
+                                    {getCategoryProgress(categoryId)}%
+                                </div>
+                            </div>
+                        </a>
+                    );
+                })}
+            </div>
+
+            {/* Active Category Content */}
+            <div className="card bg-base-100 shadow-xl">
+                <div className="card-body">
+                    {categories.map((category) => {
+                        const categoryId = category._id.toString();
+                        if (categoryId !== activeCategory) return null;
+                        
+                        return (
+                            <div key={category._id}>
+                                <div className="flex items-start justify-between mb-6">
+                                    <div>
+                                        <h3 className="text-xl font-bold mb-2" style={{ color: category.color }}>
+                                            {category.displayName}
+                                        </h3>
+                                        <p className="text-base-content/70 mb-2">{category.description}</p>
+                                        {category.estimatedTimeFrame && (
+                                            <p className="text-sm badge badge-outline">
+                                                {category.estimatedTimeFrame}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-2xl font-bold" style={{ color: category.color }}>
+                                            {getCategoryProgress(categoryId)}%
+                                        </div>
+                                        <div className="text-sm text-base-content/70">Complete</div>
+                                    </div>
+                                </div>
+
+                                {/* Tasks List */}
+                                <div className="space-y-3">
+                                    {(() => {
+                                        const categoryTasks = tasks[categoryId];
+                                        
+                                        if (!categoryTasks || categoryTasks.length === 0) {
+                                            return (
+                                                <div className="text-center py-8">
+                                                    <p className="text-base-content/70">No tasks available for this category.</p>
+                                                </div>
+                                            );
+                                        }
+                                        
+                                        return categoryTasks.map((task) => {
+                                            return (
+                                        <div key={task._id} className="flex gap-3 items-start">
+                                            {/* Checkbox outside accordion */}
+                                            <div className="form-control pt-4">
+                                                <label className="cursor-pointer">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        className="checkbox checkbox-primary"
+                                                        checked={isTaskCompleted(task._id)}
+                                                        onChange={(e) => {
+                                                            handleTaskToggle(task._id, e.target.checked);
+                                                        }}
+                                                    />
+                                                </label>
+                                            </div>
+
+                                            {/* Accordion */}
+                                            <div className="collapse collapse-arrow bg-base-200 flex-1">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={expandedTasks[task._id] || false}
+                                                onChange={() => toggleTaskExpansion(task._id)}
+                                            />
+                                            <div className="collapse-title">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center space-x-3">
+                                                        <div>
+                                                            <h4 className={`font-semibold ${isTaskCompleted(task._id) ? 'line-through text-base-content/50' : ''}`}>
+                                                                {task.title}
+                                                            </h4>
+                                                            <div className="flex items-center space-x-2 mt-1">
+                                                                {task.estimatedDuration && (
+                                                                    <span className="badge badge-sm badge-outline">
+                                                                        {task.estimatedDuration}
+                                                                    </span>
+                                                                )}
+                                                                <span className={`badge badge-sm ${
+                                                                    task.difficulty === 'easy' ? 'badge-success' :
+                                                                    task.difficulty === 'medium' ? 'badge-warning' :
+                                                                    'badge-error'
+                                                                }`}>
+                                                                    {task.difficulty}
+                                                                </span>
+                                                                {isTaskCompleted(task._id) && (
+                                                                    <span className="badge badge-sm badge-primary">
+                                                                        Completed
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="collapse-content">
+                                                <div className="pt-4 space-y-4">
+                                                    {/* Task Description */}
+                                                    <div 
+                                                        className="prose prose-sm max-w-none"
+                                                        dangerouslySetInnerHTML={{ __html: task.description }}
+                                                    />
+
+                                                    {/* External Links */}
+                                                    {task.externalLinks && task.externalLinks.length > 0 && (
+                                                        <div>
+                                                            <h5 className="font-semibold mb-2">📎 External Links:</h5>
+                                                            <div className="space-y-3">
+                                                                {task.externalLinks.map((link, index) => (
+                                                                    <div key={index} className="card bg-base-200 p-3">
+                                                                        <a 
+                                                                            href={link.url}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="btn btn-sm btn-primary mb-2"
+                                                                        >
+                                                                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                                            </svg>
+                                                                            {link.title}
+                                                                        </a>
+                                                                        {link.description && (
+                                                                            <p className="text-sm text-gray-600">{link.description}</p>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Helpful Links */}
+                                                    {task.helpfulLinks && task.helpfulLinks.length > 0 && (
+                                                        <div>
+                                                            <h5 className="font-semibold mb-2">🔗 Helpful Resources:</h5>
+                                                            <div className="space-y-3">
+                                                                {task.helpfulLinks.map((link, index) => (
+                                                                    <div key={index} className="card bg-base-200 p-3">
+                                                                        <a 
+                                                                            href={link.url}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="btn btn-sm btn-primary mb-2"
+                                                                        >
+                                                                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                                            </svg>
+                                                                            {link.title}
+                                                                        </a>
+                                                                        {link.description && (
+                                                                            <p className="text-sm text-gray-600">{link.description}</p>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Tips */}
+                                                    {task.tips && task.tips.length > 0 && (
+                                                        <div>
+                                                            <h5 className="font-semibold mb-2">💡 Tips:</h5>
+                                                            <ul className="list-disc list-inside space-y-1 text-sm">
+                                                                {task.tips.map((tip, index) => (
+                                                                    <li key={index}>{tip}</li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Requirements */}
+                                                    {task.requirements && task.requirements.length > 0 && (
+                                                        <div>
+                                                            <h5 className="font-semibold mb-2">📋 Requirements:</h5>
+                                                            <ul className="list-disc list-inside space-y-1 text-sm">
+                                                                {task.requirements.map((requirement, index) => (
+                                                                    <li key={index}>{requirement}</li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        </div>
+                                            );
+                                        });
+                                    })()}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default TasksTab;

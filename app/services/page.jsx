@@ -1,8 +1,58 @@
+/**
+ * Services Page
+ * /services
+ * 
+ * Marketing page showcasing M&M Consultations service offerings
+ * Detailed breakdown of relocation services for Indian students in Germany
+ * 
+ * Features:
+ * - Service categories with icons and descriptions
+ * - Expandable service details
+ * - Visual imagery for each service
+ * - Auth-based redirect for logged-in users
+ * - Call-to-action linking to packages page
+ * 
+ * Service Categories:
+ * 1. Pre-Departure Support - Q&A, video series, starter kit
+ * 2. Arrival & Settlement - Airport pickup, orientation bootcamp
+ * 3. Documentation Assistance - Anmeldung, banking, insurance
+ * 4. Accommodation Help - Housing search, viewings, lease support
+ * 5. Academic Support - University enrollment, tutoring
+ * 6. Social Integration - Event coordination, networking
+ * 
+ * Auth Logic:
+ * - Checks logged-in status via useLoggedInUser
+ * - Redirects admin → /dashboard/admin
+ * - Redirects user → /dashboard/user
+ * - Shows loading spinner during auth check
+ * 
+ * Layout:
+ * - Hero section with page intro
+ * - Grid of service cards with lucide-react icons
+ * - Each card expandable for detailed features
+ * - Service images for visual appeal
+ * - CTA section at bottom
+ * 
+ * Hydration Protection:
+ * - isMounted state prevents SSR/client mismatch
+ * - Returns null while redirecting
+ */
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useLoggedInUser } from "@/lib/hooks/auth.hooks";
 import {
   Book, Building, Plane, CreditCard, Phone, MapPin, FileText, Calendar, Users, Award
 } from "lucide-react";
 import Link from "next/link";
 
+/**
+ * Services Array
+ * 10 service categories with detailed features
+ * Categories: Pre-Departure, Arrival, Documentation, Cultural, Buddy, 
+ * Accommodation, Transportation, Connectivity, Safety, Financial
+ */
 const services = [
   {
     id: 'pre-departure',
@@ -146,7 +196,56 @@ const services = [
   },
 ];
 
+/**
+ * Services Component
+ * Main page component for services listing
+ * 
+ * State:
+ * - isMounted: Hydration protection flag
+ * 
+ * Auth Flow:
+ * 1. Check authentication status
+ * 2. Redirect if logged in
+ * 3. Show loading during check
+ * 4. Render services if not logged in
+ */
 const Services = () => {
+  const router = useRouter();
+  const { data: user, isLoading } = useLoggedInUser();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    // Redirect logged-in users to their dashboard
+    if (isMounted && !isLoading && user) {
+      if (user.role === 'admin') {
+        router.push('/dashboard/admin');
+      } else {
+        router.push('/dashboard/user');
+      }
+    }
+  }, [user, isLoading, isMounted, router]);
+
+  // Show loading state while checking authentication
+  if (!isMounted || isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="loading loading-spinner loading-lg text-primary"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render content if user is logged in (will redirect)
+  if (user) {
+    return null;
+  }
+
   return (
     <div>
       <section className="bg-gradient-to-r from-blue-50 to-blue-100 py-16 md:py-24">

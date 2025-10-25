@@ -1,9 +1,63 @@
+/**
+ * Packages Page
+ * /packages
+ * 
+ * Pricing and package selection page for M&M Consultations
+ * Displays service packages with detailed feature comparison
+ * 
+ * Features:
+ * - Two main package tiers (Essential & Premium)
+ * - Add-on services with individual pricing
+ * - Feature comparison with checkmarks
+ * - "Get Started" call-to-action buttons
+ * - Auth-based redirect for logged-in users
+ * - Contact section for inquiries
+ * 
+ * Packages:
+ * 1. Essential Package (₹25,000):
+ *    - Core relocation services
+ *    - Q&A sessions, video series, orientation
+ *    - WhatsApp support group
+ *    - Starter kit
+ * 
+ * 2. Premium Package (₹40,000):
+ *    - All Essential features
+ *    - Airport pickup
+ *    - Indian welcome package
+ *    - 10-day post-arrival support
+ *    - Buddy program & safety workshop
+ * 
+ * Additional Services:
+ * - À la carte add-ons for custom needs
+ * - Individual pricing for each service
+ * 
+ * Auth Logic:
+ * - Redirects logged-in users to dashboard
+ * - Admin → /dashboard/admin
+ * - User → /dashboard/user
+ * - Loading state during auth check
+ * 
+ * UI Components:
+ * - Package cards with pricing
+ * - Feature lists with check/x icons
+ * - "Popular" badge on Essential package
+ * - CTA buttons linking to contact page
+ * 
+ * Hydration Protection:
+ * - isMounted prevents SSR mismatch
+ */
 "use client"
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { useLoggedInUser } from "@/lib/hooks/auth.hooks";
 import { Check, X } from "lucide-react";
 import Link from "next/link";
 
+/**
+ * Package Definitions
+ * Two-tier pricing structure for relocation services
+ */
 const packages = [
   {
     id: 'essential',
@@ -24,7 +78,7 @@ const packages = [
       'Buddy Program',
       'Safety & Emergency Workshop'
     ],
-    popular: true
+    popular: true // Marked as recommended option
   },
   {
     id: 'premium',
@@ -40,11 +94,15 @@ const packages = [
       'Safety & Emergency Workshop',
       '1-1 Pre-Departure Discussion'
     ],
-    excludedFeatures: [],
+    excludedFeatures: [], // Premium includes all features
     popular: false
   }
 ];
 
+/**
+ * Additional à la carte services
+ * Can be purchased independently or added to packages
+ */
 const additionalServices = [
   { id: 'airport', name: 'Airport Pickup Service', price: '₹4,000' },
   { id: 'welcome', name: 'Indian Welcome Package', price: '₹6,000' },
@@ -56,32 +114,61 @@ const additionalServices = [
   { id: 'starter', name: 'Pre-Departure Starter Kit', price: '₹2,500' }
 ];
 
+// Find which package is marked as popular for default carousel position
 const popularIndex = packages.findIndex((pkg) => pkg.popular) ?? 0;
 
+/**
+ * Packages Component
+ * Main page component for pricing and package selection
+ * 
+ * State Management:
+ * - isMountedAuth: Hydration protection for SSR
+ * - activeIndex: Current package in mobile carousel
+ * 
+ * Refs:
+ * - carouselRef: Carousel container element
+ * - itemRefs: Array of individual package card refs
+ * - isScrollingProgrammatically: Prevents infinite scroll loop
+ * - observerRef: IntersectionObserver instance for scroll tracking
+ * 
+ * Features:
+ * - Responsive carousel on mobile (< 768px)
+ * - Side-by-side comparison on desktop
+ * - Auto-scroll to active package on indicator click
+ * - IntersectionObserver for scroll position tracking
+ * 
+ * Auth Flow:
+ * 1. Check if user is logged in
+ * 2. If logged in, redirect to role-specific dashboard
+ * 3. Show loading state during check
+ * 4. Render pricing if not logged in
+ */
 const Packages = () => {
+  // Authentication hooks first
+  const router = useRouter();
+  const { data: user, isLoading } = useLoggedInUser();
+  
+  // All state hooks
+  const [isMountedAuth, setIsMountedAuth] = useState(false);
   const [activeIndex, setActiveIndex] = useState(popularIndex);
+  
+  // All ref hooks
   const carouselRef = useRef(null);
   const itemRefs = useRef([]);
   const isScrollingProgrammatically = useRef(false);
   const observerRef = useRef(null);
 
-  // --- Helper Functions from PackageOverview ---
-  const handleTabChange = (index) => {
-    if (index === activeIndex) return;
-
-    setActiveIndex(index);
-    const targetItem = itemRefs.current[index];
-    if (targetItem && carouselRef.current) {
-      isScrollingProgrammatically.current = true;
-      const scrollLeft = targetItem.offsetLeft - carouselRef.current.offsetLeft;
-      carouselRef.current.scrollTo({ left: scrollLeft, behavior: "smooth" });
-
-      setTimeout(() => {
-        isScrollingProgrammatically.current = false;
-      }, 600);
-    }
-  };
-
+  /**
+   * Intersection Observer Callback
+   * Tracks which package card is currently in view
+   * 
+   * Logic:
+   * - Ignore intersections during programmatic scrolling
+   * - Find the ref index that matches the intersecting element
+   * - Update activeIndex if different package is 75%+ visible
+   * 
+   * Threshold: 0.75 (75% of card must be visible to trigger)
+   */
   const handleIntersection = useCallback(
     (entries) => {
       if (isScrollingProgrammatically.current) return;
@@ -100,7 +187,56 @@ const Packages = () => {
     [activeIndex],
   );
 
-  // --- useEffect Hooks from PackageOverview ---
+  /**
+   * Effect: Hydration Protection
+   * Sets isMountedAuth to prevent SSR/client mismatch
+   */
+  useEffect(() => {
+    setIsMountedAuth(true);
+  }, []);
+
+  /**
+   * Effect: Auth-based Redirect
+   * Redirects authenticated users to their dashboard
+   * 
+   * Flow:
+   * 1. Wait for component mount (isMountedAuth)
+   * 2. Wait for auth check to complete (!isLoading)
+   * 3. If user exists, redirect based on role
+   * 
+   * Routes:
+   * - Admin → /dashboard/admin
+   * - User → /dashboard/user
+   */
+  useEffect(() => {
+    // Redirect logged-in users to their dashboard
+    if (isMountedAuth && !isLoading && user) {
+      if (user.role === 'admin') {
+        router.push('/dashboard/admin');
+      } else {
+        router.push('/dashboard/user');
+      }
+    }
+  }, [user, isLoading, isMountedAuth, router]);
+
+  /**
+   * Effect: Intersection Observer Setup
+   * Initializes scroll position tracking for mobile carousel
+   * 
+   * Configuration:
+   * - root: carouselRef (scrollable container)
+   * - threshold: 0.75 (75% visibility required)
+   * - rootMargin: 0px (no margin around root)
+   * 
+   * Mobile-Only Initial Scroll:
+   * - Checks window width < 768px (Tailwind md breakpoint)
+   * - Auto-scrolls to popular package on mount
+   * - Uses smooth scrolling on desktop, instant on mobile
+   * 
+   * Cleanup:
+   * - Disconnects observer on unmount
+   * - Prevents memory leaks
+   */
   useEffect(() => {
     const currentItemRefs = itemRefs.current.filter(Boolean);
     if (currentItemRefs.length === 0) return;
@@ -132,7 +268,6 @@ const Packages = () => {
         }
     }
 
-
     return () => {
       if (observerRef.current) {
         observerRef.current.disconnect();
@@ -140,14 +275,81 @@ const Packages = () => {
     };
   }, [handleIntersection, activeIndex]); // Rerun effect if handler or activeIndex changes
 
+  /**
+   * Effect: Refs Array Cleanup
+   * Ensures itemRefs array matches current package count
+   * Prevents memory leaks from removed packages
+   */
   useEffect(() => {
     itemRefs.current = itemRefs.current.slice(0, packages.length);
     return () => {
       itemRefs.current = [];
     };
   }, [packages.length]);
+
+  /**
+   * Conditional Rendering: Loading State
+   * Shows spinner while:
+   * - Component is mounting (isMountedAuth = false)
+   * - Auth check is in progress (isLoading = true)
+   */
+  if (!isMountedAuth || isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="loading loading-spinner loading-lg text-primary"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  /**
+   * Conditional Rendering: Auth Redirect
+   * Returns null if user is logged in
+   * Redirect handled by useEffect above
+   */
+  if (user) {
+    return null;
+  }
+
+  /**
+   * handleTabChange
+   * Programmatically scrolls carousel to selected package
+   * 
+   * Parameters:
+   * - index: Package index to scroll to
+   * 
+   * Logic:
+   * 1. Ignore if already on selected index
+   * 2. Update activeIndex state
+   * 3. Calculate scroll position from offsetLeft
+   * 4. Smooth scroll to target position
+   * 5. Set flag to prevent IntersectionObserver conflicts
+   * 6. Clear flag after 600ms (animation duration)
+   * 
+   * Mobile Only:
+   * - Only called from mobile carousel indicators
+   */
+  const handleTabChange = (index) => {
+    if (index === activeIndex) return;
+
+    setActiveIndex(index);
+    const targetItem = itemRefs.current[index];
+    if (targetItem && carouselRef.current) {
+      isScrollingProgrammatically.current = true;
+      const scrollLeft = targetItem.offsetLeft - carouselRef.current.offsetLeft;
+      carouselRef.current.scrollTo({ left: scrollLeft, behavior: "smooth" });
+
+      setTimeout(() => {
+        isScrollingProgrammatically.current = false;
+      }, 600);
+    }
+  };
+  
   return (
     <div>
+      {/* Hero Section - Gradient background with title and description */}
       <section className="bg-gradient-to-r from-blue-50 to-blue-100 py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center">
@@ -162,30 +364,29 @@ const Packages = () => {
         </div>
       </section>
 
-      
-
+      {/* Main Packages Section - Responsive layout (carousel on mobile, grid on desktop) */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* --- Mobile View: Toggles + Carousel (Hidden on Medium screens and up) --- */}
-          <div className="md:hidden"> {/* Added margin bottom */}
-            {/* DaisyUI Tabs for Toggles */}
+          {/* Mobile View: Toggles + Carousel (< 768px) */}
+          <div className="md:hidden">
+            {/* Package Selection Tabs - Radio inputs styled as tabs */}
             <div role="tablist" className="tabs tabs-boxed justify-center mb-6">
               {packages.map((pkg, index) => (
                 <input
                   key={pkg.id}
                   type="radio"
-                  name="package_tabs_page" // Use a unique name
+                  name="package_tabs_page"
                   role="tab"
                   className="tab"
                   aria-label={pkg.name}
                   checked={activeIndex === index}
                   onChange={() => handleTabChange(index)}
-                  readOnly
+                  readOnly // Prevents React warning, onChange handles interaction
                 />
               ))}
             </div>
 
-            {/* DaisyUI Carousel */}
+            {/* Horizontal Scrolling Carousel - Snap scroll for mobile */}
             <div
               ref={carouselRef}
               className="carousel w-full rounded-box scroll-smooth"
@@ -194,24 +395,26 @@ const Packages = () => {
               {packages.map((pkg, index) => (
                 <div
                   key={pkg.id}
-                  ref={(el) => (itemRefs.current[index] = el)}
+                  ref={(el) => (itemRefs.current[index] = el)} // Track refs for scrolling
                   id={`package-mobile-${pkg.id}`}
                   className="carousel-item w-full flex-shrink-0"
-                  style={{ scrollSnapAlign: "start" }}
+                  style={{ scrollSnapAlign: "start" }} // Snap to start of each card
                 >
                   <div className="p-2 w-full">
-                    {/* Re-use card structure, ensure h-full and flex */}
+                    {/* Package Card - Full height with flex layout */}
                     <div
                       className={`bg-white rounded-lg shadow-lg overflow-hidden relative flex flex-col h-full ${
                         pkg.popular ? "ring-2 ring-primary" : ""
                       }`}
                     >
+                      {/* Popular Badge - Shown on recommended package */}
                       {pkg.popular && (
                         <div className="bg-primary text-white py-2 text-center font-medium">
                           Most Popular
                         </div>
                       )}
                       <div className="p-6 w-full flex flex-col flex-grow">
+                        {/* Package Header - Name, description, price */}
                         <div>
                           <h3 className="text-2xl font-bold text-gray-800 mb-2">
                             {pkg.name}
@@ -223,7 +426,9 @@ const Packages = () => {
                             {pkg.price}
                           </p>
                         </div>
+                        {/* Package Features - Included and excluded lists */}
                         <div className="flex-grow">
+                          {/* Included Features - Green checkmarks */}
                           <div className="mb-6">
                             <h4 className="font-semibold text-gray-800 mb-3">
                               Included:
@@ -237,6 +442,7 @@ const Packages = () => {
                               ))}
                             </ul>
                           </div>
+                          {/* Excluded Features - Red X marks (Essential package only) */}
                           {pkg.excludedFeatures.length > 0 && (
                             <div className="mb-6">
                               <h4 className="font-semibold text-gray-800 mb-3">
@@ -245,7 +451,7 @@ const Packages = () => {
                               <ul className="space-y-1">
                                 {pkg.excludedFeatures.map((feature, fIndex) => (
                                   <li key={fIndex} className="flex items-center">
-                                    <X className="h-4 w-4 text-red-400 mr-2 flex-shrink-0" /> {/* Added X icon */}
+                                    <X className="h-4 w-4 text-red-400 mr-2 flex-shrink-0" />
                                     <span className="text-gray-500 text-sm">
                                       {feature}
                                     </span>
@@ -255,6 +461,7 @@ const Packages = () => {
                             </div>
                           )}
                         </div>
+                        {/* CTA Button - Positioned at bottom */}
                         <div className="mt-auto pt-4">
                           <button
                             className={`w-full btn ${
@@ -274,7 +481,7 @@ const Packages = () => {
             </div>
           </div>
 
-          {/* --- Desktop Grid (Hidden on Small screens) --- */}
+          {/* Desktop Grid (>= 768px) - Side-by-side comparison */}
           <div className="hidden md:grid md:grid-cols-2 gap-8">
             {packages.map((pkg) => (
               <div
@@ -284,12 +491,14 @@ const Packages = () => {
                   pkg.popular ? "ring-2 ring-primary" : ""
                 }`}
               >
+                {/* Popular Badge - Desktop version */}
                 {pkg.popular && (
                   <div className="bg-primary text-white py-2 text-center font-medium">
                     Most Popular
                   </div>
                 )}
                 <div className="p-6">
+                  {/* Package Header - Desktop layout */}
                   <div>
                     <h3 className="text-2xl font-bold text-gray-800 mb-2">
                       {pkg.name}
@@ -302,6 +511,7 @@ const Packages = () => {
                     </p>
                   </div>
                   <div className="">
+                    {/* Included Features - Desktop version */}
                     <div className="mb-6">
                       <h4 className="font-semibold text-gray-800 mb-3">
                         Included:
@@ -315,6 +525,7 @@ const Packages = () => {
                         ))}
                       </ul>
                     </div>
+                    {/* Excluded Features - Desktop version */}
                     {pkg.excludedFeatures.length > 0 && (
                       <div className="mb-6">
                         <h4 className="font-semibold text-gray-800 mb-3">
@@ -323,7 +534,7 @@ const Packages = () => {
                         <ul className="space-y-1">
                           {pkg.excludedFeatures.map((feature, index) => (
                             <li key={index} className="flex items-center">
-                              <X className="h-4 w-4 text-red-400 mr-2 flex-shrink-0" /> {/* Added X icon */}
+                              <X className="h-4 w-4 text-red-400 mr-2 flex-shrink-0" />
                               <span className="text-gray-500 text-sm">
                                 {feature}
                               </span>
@@ -333,6 +544,7 @@ const Packages = () => {
                       </div>
                     )}
                   </div>
+                  {/* CTA Button - Desktop version links to customization page */}
                   <div className="mt-auto pt-4">
                     <button
                       className={`w-full btn ${
@@ -349,6 +561,7 @@ const Packages = () => {
             ))}
           </div>
 
+          {/* Additional Services Section - À la carte add-ons */}
           <div className="mt-16 bg-gray-50 rounded-lg p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
               Additional Services
@@ -358,6 +571,7 @@ const Packages = () => {
               your specific needs:
             </p>
 
+            {/* Service Grid - 4 columns on large screens, 2 on medium, 1 on mobile */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {additionalServices.map((service) => (
                 <div
@@ -375,6 +589,7 @@ const Packages = () => {
             </div>
           </div>
 
+          {/* Customization CTA - Contact for personalized package */}
           <div className="mt-16 text-center ">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
               Need a Customized Solution?
@@ -392,13 +607,16 @@ const Packages = () => {
         </div>
       </section>
 
+      {/* FAQ Section - Common questions about packages */}
       <section className="py-16 bg-blue-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
             <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">
               Frequently Asked Questions
             </h2>
+            {/* Accordion-style FAQ - DaisyUI collapse component */}
             <div className="space-y-4">
+            {/* FAQ Item 1 - Affordability */}
             <div className="collapse collapse-plus bg-base-100 border border-base-300">
               <input type="radio" name="my-accordion-3" defaultChecked />
               <div className="collapse-title font-semibold">
@@ -410,6 +628,7 @@ const Packages = () => {
                   our O2 mobile plan with 50% off and 100-300 GB data.
               </div>
             </div>
+            {/* FAQ Item 2 - Package Upgrades */}
             <div className="collapse collapse-plus bg-base-100 border border-base-300">
               <input type="radio" name="my-accordion-3" />
               <div className="collapse-title font-semibold">
@@ -420,6 +639,7 @@ const Packages = () => {
                   (₹4,000) or Indian Welcome Package (₹6,000) at any time during your relocation process.
               </div>
             </div>
+            {/* FAQ Item 3 - Starter Kit Details */}
             <div className="collapse collapse-plus bg-base-100 border border-base-300">
               <input type="radio" name="my-accordion-3" />
               <div className="collapse-title font-semibold">
@@ -430,6 +650,7 @@ const Packages = () => {
                   pre-activated O2 SIM card, universal travel adapter, and a personalized checklist, mailed 1-2 months before departure.
               </div>
             </div>
+            {/* FAQ Item 4 - Getting Started */}
             <div className="collapse collapse-plus bg-base-100 border border-base-300">
               <input type="radio" name="my-accordion-3" />
               <div className="collapse-title font-semibold">
