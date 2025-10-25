@@ -3,6 +3,8 @@ import connectDB from '@/lib/utils/db';
 import UserProgress from '@/lib/models/userProgress.model';
 import User from '@/lib/models/user.model';
 import jwt from 'jsonwebtoken';
+import { checkAndUpdatePackageExpiry } from '@/lib/middleware/packageExpiryCheck';
+import { hasActivePaidPlan } from '@/lib/middleware/userAuth';
 
 /**
  * User Progress API Endpoints
@@ -64,10 +66,13 @@ async function getUserFromToken(request) {
  */
 export async function GET(request) {
   try {
-    const user = await getUserFromToken(request);
+    let user = await getUserFromToken(request);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Check and update package expiry (only for users, not admins)
+    user = await checkAndUpdatePackageExpiry(user);
 
     await connectDB();
     
@@ -126,9 +131,24 @@ export async function GET(request) {
  */
 export async function PUT(request) {
   try {
-    const user = await getUserFromToken(request);
+    let user = await getUserFromToken(request);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check and update package expiry (only for users, not admins)
+    user = await checkAndUpdatePackageExpiry(user);
+    
+    // Check if user still has active paid plan after expiry check
+    if (!hasActivePaidPlan(user)) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Access denied. Your plan has expired. Please upgrade to continue.',
+          requiresPaidPlan: true 
+        },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();

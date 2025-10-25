@@ -3,6 +3,7 @@ import connectDB from '@/lib/utils/db';
 import Task from '@/lib/models/task.model';
 import seedData from '@/lib/data/seedData';
 import { verifyUserAuth, hasActivePaidPlan } from '@/lib/middleware/userAuth';
+import { checkAndUpdatePackageExpiry } from '@/lib/middleware/packageExpiryCheck';
 
 /**
  * Get Tasks API Endpoint (User Dashboard)
@@ -30,7 +31,10 @@ import { verifyUserAuth, hasActivePaidPlan } from '@/lib/middleware/userAuth';
  */
 export async function GET(request) {
   try {
-    const user = await verifyUserAuth(request);
+    let user = await verifyUserAuth(request);
+    
+    // Check and update package expiry (only for users, not admins)
+    user = await checkAndUpdatePackageExpiry(user);
     
     if (!hasActivePaidPlan(user)) {
       return NextResponse.json(

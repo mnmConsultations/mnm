@@ -44,6 +44,7 @@ import connectDB from '@/lib/utils/db';
 import Notification from '@/lib/models/notification.model';
 import User from '@/lib/models/user.model';
 import jwt from 'jsonwebtoken';
+import { checkAndUpdatePackageExpiry } from '@/lib/middleware/packageExpiryCheck';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-fallback-secret';
 
@@ -77,10 +78,13 @@ async function getUserFromToken(request) {
 
 export async function GET(request) {
   try {
-    const user = await getUserFromToken(request);
+    let user = await getUserFromToken(request);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Check and update package expiry (only for users, not admins)
+    user = await checkAndUpdatePackageExpiry(user);
 
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit')) || 10;
@@ -134,10 +138,13 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const user = await getUserFromToken(request);
+    let user = await getUserFromToken(request);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Check and update package expiry (only for users, not admins)
+    user = await checkAndUpdatePackageExpiry(user);
 
     const body = await request.json();
     const { title, message, type, priority, actionRequired, actionUrl, expiresAt } = body;
@@ -180,10 +187,13 @@ export async function POST(request) {
 
 export async function PATCH(request) {
   try {
-    const user = await getUserFromToken(request);
+    let user = await getUserFromToken(request);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Check and update package expiry (only for users, not admins)
+    user = await checkAndUpdatePackageExpiry(user);
 
     const body = await request.json();
     const { notificationId, isRead } = body;
